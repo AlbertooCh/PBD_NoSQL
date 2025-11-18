@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  # Riak: Base de datos Key-Value distribuida
+  riak:
+    image: basho/riak-kv
+    ports:
+      - "8087:8087" # Protocol Buffers (para clientes Python nativos)
+      - "8098:8098" # HTTP (para pruebas con curl y requests)
+
+  # MongoDB: Base de datos documental
+  mongo:
+    image: mongo:latest
+    ports: ["27017:27017"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: pass
+
+  # Redis: Base de datos en memoria
+  redis:
+    image: redis:alpine
+    ports: ["6379:6379"]
