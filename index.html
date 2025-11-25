@@ -71,7 +71,7 @@
 
     <!-- CONTENIDO PRINCIPAL -->
     <main class="flex-1 flex flex-col relative overflow-hidden bg-slate-900">
-
+        
         <!-- BIENVENIDA -->
         <div id="welcome-view" class="absolute inset-0 flex flex-col items-center justify-center text-center p-10 fade-in z-10">
             <div class="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent text-7xl font-extrabold mb-6">
@@ -154,16 +154,16 @@
         const API_URL = "http://localhost:8000";
         let currentOp = null;
         let currentDB = 'mongo';
-
+        
         const KNOWLEDGE = {
             // --- CRUD BÁSICO ---
             listar: {
                 title: "Listar Todo",
                 subtitle: "Obtener todas las claves/documentos.",
                 inputs: [],
-                mongo: { desc: "Scan completo.", code: `db.poblacion.find({})` },
-                redis: {
-                    desc: "Obtener todas las claves y luego sus valores JSON.",
+                mongo: { desc: "Scan completo.", code: `cursor = db.poblacion.find({}).limit(5)\nfor doc in cursor:\n  print(doc)` },
+                redis: { 
+                    desc: "Obtener todas las claves y luego sus valores JSON.", 
                     code: `keysPob = r.keys("poblacion:*")\nfor k in keysPob:\n  registro = r.json().get(k)\n  print(registro)`
                 },
                 riak: { desc: "Obtener keys + get.", code: `keys = bucket.get_keys()\nfor k in keys: get(k)` }
@@ -172,7 +172,7 @@
                 title: "Leer por ID",
                 subtitle: "Recuperar objeto por su clave.",
                 inputs: [{id: 'dni', label: 'DNI', type: 'text', val: '555888999'}],
-                mongo: { desc: "Find one.", code: `findOne({dni: '{{dni}}'})` },
+                mongo: { desc: "Find one.", code: `doc = db.poblacion.find_one({"_id": "{{dni}}"})\nprint(doc)` },
                 redis: { desc: "JSON.GET directo.", code: `r.json().get("poblacion:{{dni}}")` },
                 riak: { desc: "Get directo.", code: `bucket.get('{{dni}}')` }
             },
@@ -180,23 +180,26 @@
                 title: "Insertar (Pub/Sub)",
                 subtitle: "Insertar JSON y notificar evento.",
                 inputs: [{id: 'dni', label: 'DNI', type: 'text', val: '555888999'}, {id: 'nombre', label: 'Nombre', type: 'text', val: 'Laura'}, {id: 'ingresos', label: 'Ingresos', type: 'number', val: 30000}],
-                mongo: {
-                    desc: "Insert One con Trigger automático en Atlas.",
-                    code: `try:\n  db.poblacion.insert_one(p)\n  print(f"Insertado {p['_id']}")\nexcept DuplicateKeyError:\n  print("Duplicado")`
+                mongo: { 
+                    desc: "Insert One (Trigger automático en Atlas).", 
+                    code: `try:\n  db.poblacion.insert_one(p)\n  print(f"Insertado {p['_id']}")\nexcept DuplicateKeyError:\n  print("Duplicado")` 
                 },
-                redis: {
-                    desc: "Guardar JSON y publicar mensaje al canal 'nueva_persona'.",
+                redis: { 
+                    desc: "Guardar JSON y publicar mensaje al canal 'nueva_persona'.", 
                     code: `p = { "dni": "{{dni}}", "nombre": "{{nombre}}" ... }\n# 1. Guardar\nr.json().set(f"poblacion:{p['dni']}", Path.root_path(), p)\n# 2. Notificar\nr.publish("nueva_persona", f"Se ha unido {p['nombre']}")`
                 },
-                riak: { desc: "Store + Índices.", code: `store(..., indexes={...})` }
+                riak: { 
+                    desc: "Insertar objeto y enviar metadatos de índices secundarios (2i) en headers.", 
+                    code: `indices = {'ingresos_int': {{ingresos}}...}\nstore_object_with_indexes('poblacion', '{{dni}}', data, indices)` 
+                }
             },
             actualizar: {
                 title: "Actualizar (Parcial)",
                 subtitle: "Modificar un campo específico del JSON.",
                 inputs: [{id: 'dni', label: 'DNI', type: 'text', val: '555888999'}],
-                mongo: { desc: "Update One.", code: `updateOne(...)` },
-                redis: {
-                    desc: "JSON.SET en un path específico ($.ingresos).",
+                mongo: { desc: "Update One ($set).", code: `db.poblacion.update_one(\n  {"_id": "{{dni}}"},\n  {"$set": {"ingresos": ...}}\n)` },
+                redis: { 
+                    desc: "JSON.SET en un path específico ($.ingresos).", 
                     code: `r.json().set("poblacion:{{dni}}", "$.ingresos", 16000)\nr.json().set("poblacion:{{dni}}", "$.direccion", "C. Actualizada")`
                 },
                 riak: { desc: "Fetch -> Modify -> Store.", code: `obj = get(); obj.ingresos=...; put(obj)` }
@@ -205,7 +208,7 @@
                 title: "Borrar",
                 subtitle: "Eliminar clave.",
                 inputs: [{id: 'dni', label: 'DNI', type: 'text', val: '555888999'}],
-                mongo: { desc: "Delete one.", code: `deleteOne(...)` },
+                mongo: { desc: "Delete one.", code: `db.poblacion.delete_one({"_id": "{{dni}}"})` },
                 redis: { desc: "Borrado simple.", code: `r.delete("poblacion:{{dni}}")` },
                 riak: { desc: "Delete.", code: `delete(...)` }
             },
@@ -214,57 +217,69 @@
                 title: "Crear Índice",
                 subtitle: "Optimización de consultas.",
                 inputs: [],
-                mongo: {
-                    desc: "Índices B-Tree simples y compuestos.",
-                    code: `db.poblacion.create_index([("ingresos", ASCENDING)])\n# Indice compuesto\ndb.poblacion.create_index([("sector", ASCENDING), ("sexo", ASCENDING)])`
+                mongo: { 
+                    desc: "Índices B-Tree simples y compuestos.", 
+                    code: `db.poblacion.create_index([("ingresos", ASCENDING)])\n# Indice compuesto\ndb.poblacion.create_index([("sector", ASCENDING), ("sexo", ASCENDING)])` 
                 },
-                redis: {
-                    desc: "Crear índice sobre campos JSON (FT.CREATE).",
+                redis: { 
+                    desc: "Crear índice sobre campos JSON (FT.CREATE).", 
                     code: `schema = (\n  TextField("$.nombre", as_name="nombre"),\n  NumericField("$.ingresos", as_name="ingresos"),\n  ...\n)\nr.ft("idx_poblacion").create_index(\n  schema,\n  definition=IndexDefinition(prefix=["poblacion:"], index_type=IndexType.JSON)\n)`
                 },
-                riak: { desc: "Re-indexar (headers).", code: `put_with_headers(...)` }
+                riak: { 
+                    desc: "Recorrer claves existentes y re-guardar con headers 2i.", 
+                    code: `keys = get_keys('poblacion')\nfor k in keys:\n  data = get_object('poblacion', k)\n  idxs = {'ingresos_int': data['ingresos']...}\n  store_object_with_indexes('poblacion', k, data, idxs)` 
+                }
             },
             rango: {
                 title: "Búsqueda Rango",
                 subtitle: "Operadores de comparación.",
                 inputs: [{id: 'min_val', label: 'Min', type: 'number', val: 20000}, {id: 'max_val', label: 'Max', type: 'number', val: 50000}],
-                mongo: {
-                    desc: "Operadores $gte y $lte con proyección.",
-                    code: `query = {"ingresos": {"$gte": {{min_val}}, "$lte": {{max_val}}}}\nprojection = {"_id": 1, "nombre": 1, ...}\nres = db.poblacion.find(query, projection)`
+                mongo: { 
+                    desc: "Operadores $gte y $lte con proyección.", 
+                    code: `query = {"ingresos": {"$gte": {{min_val}}, "$lte": {{max_val}}}}\nprojection = {"_id": 1, "nombre": 1, ...}\nres = db.poblacion.find(query, projection)` 
                 },
-                redis: {
-                    desc: "Query con sintaxis @campo:[min max].",
+                redis: { 
+                    desc: "Query con sintaxis @campo:[min max].", 
                     code: `q = Query("@ingresos:[{{min_val}} {{max_val}}]").paging(0, 100)\nres = r.ft("idx_poblacion").search(q)\nfor doc in res.docs: ...`
                 },
-                riak: { desc: "2i Range.", code: `get_index(...)` }
+                riak: { 
+                    desc: "Query directa al índice 'ingresos_int' para obtener claves.", 
+                    code: `keys_found = query_2i_range('poblacion', 'ingresos_int', {{min_val}}, {{max_val}})\nfor k in keys_found:\n  d = get_object('poblacion', k)\n  print(d)` 
+                }
             },
             filtro: {
                 title: "Filtro Complejo",
                 subtitle: "Sector AND Sexo.",
                 inputs: [{id: 'sector', label: 'Sector', type: 'number', val: 2}, {id: 'sexo', label: 'Sexo', type: 'select', val: 'M', opts:['H','M']}],
-                mongo: {
-                    desc: "Búsqueda exacta (usa índice compuesto).",
-                    code: `query = {"sector": {{sector}}, "sexo": "{{sexo}}"}\nres = db.poblacion.find(query)`
+                mongo: { 
+                    desc: "Búsqueda exacta (usa índice compuesto).", 
+                    code: `query = {"sector": {{sector}}, "sexo": "{{sexo}}"}\nres = db.poblacion.find(query)` 
                 },
-                redis: {
-                    desc: "Intersección de filtros en la Query string.",
+                redis: { 
+                    desc: "Intersección de filtros en la Query string.", 
                     code: `q = Query("@sector:[{{sector}} {{sector}}] @sexo:{{sexo}}")\nres = r.ft("idx_poblacion").search(q)`
                 },
-                riak: { desc: "App Side Join.", code: `...` }
+                riak: { 
+                    desc: "Filtro Primario (Sector) en DB + Filtro Secundario (Sexo) en App.", 
+                    code: `# 1. Filtro índice Riak\nkeys = query_2i_exact('poblacion', 'sector_int', {{sector}})\n# 2. Filtro App Side\nfor k in keys:\n  d = get_object('poblacion', k)\n  if d['sexo'] == '{{sexo}}': print(d)` 
+                }
             },
             agregacion: {
                 title: "Agregación",
                 subtitle: "Suma de ingresos por sector.",
                 inputs: [{id: 'sector', label: 'Sector', type: 'number', val: 2}],
-                mongo: {
-                    desc: "Pipeline con persistencia ($out/insert).",
-                    code: `pipeline = [\n  {"$group": {\n    "_id": "$sector",\n    "totalIngresos": {"$sum": "$ingresos"}\n  }},\n  {"$sort": {"_id": 1}}\n]\nres = db.poblacion.aggregate(pipeline)\ndb.resumen_sector.insert_many(res)`
+                mongo: { 
+                    desc: "Pipeline con persistencia ($out/insert).", 
+                    code: `pipeline = [\n  {"$group": {\n    "_id": "$sector",\n    "totalIngresos": {"$sum": "$ingresos"}\n  }},\n  {"$sort": {"_id": 1}}\n]\nres = db.poblacion.aggregate(pipeline)\ndb.resumen_sector.insert_many(res)` 
                 },
-                redis: {
-                    desc: "Iterar claves y guardar resumen en un Hash separado.",
+                redis: { 
+                    desc: "Iterar claves y guardar resumen en un Hash separado.", 
                     code: `keys = r.keys("poblacion:*")\nresumen = {}\nfor k in keys:\n  p = r.json().get(k)\n  s = p.get('sector')\n  resumen[s] += p.get('ingresos')\n\n# Guardar resultado\nr.hset("resumen_sector", str(s), total)`
                 },
-                riak: { desc: "Iterar keys.", code: `...` }
+                riak: { 
+                    desc: "MapReduce Manual (Cliente descarga y suma).", 
+                    code: `keys = get_keys('poblacion')\nresumen = {}\nfor k in keys:\n  p = get_object('poblacion', k)\n  s = str(p['sector'])\n  resumen[s] += p['ingresos']\nstore_object_with_indexes('resumenes', 'resumen_sector', resumen)` 
+                }
             }
         };
 
@@ -355,10 +370,10 @@
                 if (val !== "") cleanParams[key] = val;
             }
             const params = new URLSearchParams(cleanParams);
-
+            
             const url = `${API_URL}/execute/${currentOp}/${currentDB}?${params}`;
             document.getElementById('console-output').innerHTML = '<div class="text-yellow-500 animate-pulse">⏳ Procesando...</div>';
-
+            
             try {
                 const res = await fetch(url);
                 if (!res.ok) {
@@ -371,7 +386,7 @@
                 data.trace.forEach(l => { const d=document.createElement('div'); d.innerText=l; consoleDiv.appendChild(d); });
                 document.getElementById('json-output').innerText = JSON.stringify(data.data, null, 2);
                 document.getElementById('exec-time').innerText = `${data.time_ms} ms`;
-            } catch(e) {
+            } catch(e) { 
                 document.getElementById('console-output').innerHTML = `<div class="text-red-500 font-bold">❌ ${e.message}</div>`;
             }
         }
