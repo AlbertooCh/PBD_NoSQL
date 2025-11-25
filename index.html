@@ -55,7 +55,7 @@
 
             <div class="mt-6 text-xs font-bold text-slate-600 uppercase tracking-widest mb-2 px-2">Consultas Avanzadas</div>
             <button onclick="loadOperation('indexar')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white">
-                🏷️ <span>Indexar (RediSearch)</span>
+                🏷️ <span>Indexar (Optimización)</span>
             </button>
             <button onclick="loadOperation('rango')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white">
                 🔍 <span>Búsqueda Rango</span>
@@ -180,7 +180,10 @@
                 title: "Insertar (Pub/Sub)",
                 subtitle: "Insertar JSON y notificar evento.",
                 inputs: [{id: 'dni', label: 'DNI', type: 'text', val: '555888999'}, {id: 'nombre', label: 'Nombre', type: 'text', val: 'Laura'}, {id: 'ingresos', label: 'Ingresos', type: 'number', val: 30000}],
-                mongo: { desc: "Insertar.", code: `insertOne({...})` },
+                mongo: {
+                    desc: "Insert One con Trigger automático en Atlas.",
+                    code: `try:\n  db.poblacion.insert_one(p)\n  print(f"Insertado {p['_id']}")\nexcept DuplicateKeyError:\n  print("Duplicado")`
+                },
                 redis: {
                     desc: "Guardar JSON y publicar mensaje al canal 'nueva_persona'.",
                     code: `p = { "dni": "{{dni}}", "nombre": "{{nombre}}" ... }\n# 1. Guardar\nr.json().set(f"poblacion:{p['dni']}", Path.root_path(), p)\n# 2. Notificar\nr.publish("nueva_persona", f"Se ha unido {p['nombre']}")`
@@ -209,9 +212,12 @@
             // --- AVANZADO ---
             indexar: {
                 title: "Crear Índice",
-                subtitle: "Definir esquema para RediSearch.",
+                subtitle: "Optimización de consultas.",
                 inputs: [],
-                mongo: { desc: "Create Index.", code: `createIndex(...)` },
+                mongo: {
+                    desc: "Índices B-Tree simples y compuestos.",
+                    code: `db.poblacion.create_index([("ingresos", ASCENDING)])\n# Indice compuesto\ndb.poblacion.create_index([("sector", ASCENDING), ("sexo", ASCENDING)])`
+                },
                 redis: {
                     desc: "Crear índice sobre campos JSON (FT.CREATE).",
                     code: `schema = (\n  TextField("$.nombre", as_name="nombre"),\n  NumericField("$.ingresos", as_name="ingresos"),\n  ...\n)\nr.ft("idx_poblacion").create_index(\n  schema,\n  definition=IndexDefinition(prefix=["poblacion:"], index_type=IndexType.JSON)\n)`
@@ -220,9 +226,12 @@
             },
             rango: {
                 title: "Búsqueda Rango",
-                subtitle: "RediSearch Query Numérica.",
+                subtitle: "Operadores de comparación.",
                 inputs: [{id: 'min_val', label: 'Min', type: 'number', val: 20000}, {id: 'max_val', label: 'Max', type: 'number', val: 50000}],
-                mongo: { desc: "$gte / $lte.", code: `find(...)` },
+                mongo: {
+                    desc: "Operadores $gte y $lte con proyección.",
+                    code: `query = {"ingresos": {"$gte": {{min_val}}, "$lte": {{max_val}}}}\nprojection = {"_id": 1, "nombre": 1, ...}\nres = db.poblacion.find(query, projection)`
+                },
                 redis: {
                     desc: "Query con sintaxis @campo:[min max].",
                     code: `q = Query("@ingresos:[{{min_val}} {{max_val}}]").paging(0, 100)\nres = r.ft("idx_poblacion").search(q)\nfor doc in res.docs: ...`
@@ -233,7 +242,10 @@
                 title: "Filtro Complejo",
                 subtitle: "Sector AND Sexo.",
                 inputs: [{id: 'sector', label: 'Sector', type: 'number', val: 2}, {id: 'sexo', label: 'Sexo', type: 'select', val: 'M', opts:['H','M']}],
-                mongo: { desc: "Find.", code: `find(...)` },
+                mongo: {
+                    desc: "Búsqueda exacta (usa índice compuesto).",
+                    code: `query = {"sector": {{sector}}, "sexo": "{{sexo}}"}\nres = db.poblacion.find(query)`
+                },
                 redis: {
                     desc: "Intersección de filtros en la Query string.",
                     code: `q = Query("@sector:[{{sector}} {{sector}}] @sexo:{{sexo}}")\nres = r.ft("idx_poblacion").search(q)`
@@ -241,10 +253,13 @@
                 riak: { desc: "App Side Join.", code: `...` }
             },
             agregacion: {
-                title: "Agregación Manual",
+                title: "Agregación",
                 subtitle: "Suma de ingresos por sector.",
                 inputs: [{id: 'sector', label: 'Sector', type: 'number', val: 2}],
-                mongo: { desc: "Pipeline.", code: `aggregate(...)` },
+                mongo: {
+                    desc: "Pipeline con persistencia ($out/insert).",
+                    code: `pipeline = [\n  {"$group": {\n    "_id": "$sector",\n    "totalIngresos": {"$sum": "$ingresos"}\n  }},\n  {"$sort": {"_id": 1}}\n]\nres = db.poblacion.aggregate(pipeline)\ndb.resumen_sector.insert_many(res)`
+                },
                 redis: {
                     desc: "Iterar claves y guardar resumen en un Hash separado.",
                     code: `keys = r.keys("poblacion:*")\nresumen = {}\nfor k in keys:\n  p = r.json().get(k)\n  s = p.get('sector')\n  resumen[s] += p.get('ingresos')\n\n# Guardar resultado\nr.hset("resumen_sector", str(s), total)`
