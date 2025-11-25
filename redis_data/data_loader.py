@@ -1,79 +1,83 @@
-import redis
-import json
+from redis import Redis
+from redis.commands.json.path import Path
 
 # --- CONFIGURACIÓN DE CONEXIÓN ---
-REDIS_HOST = 'localhost'
-REDIS_PORT = 6379
+r = Redis(host='localhost', port=6379, decode_responses=True)
+
 
 # --- DATASETS COMPLETOS ---
-SECTORES_DATA = {
-    1: {"nombre": "Agricultura y pesca", "ingresos_sum": 0.0, "porcentaje": 0.0},
-    2: {"nombre": "Industria y energía", "ingresos_sum": 0.0, "porcentaje": 0.0},
-    3: {"nombre": "Servicios", "ingresos_sum": 0.0, "porcentaje": 0.0},
-    4: {"nombre": "Construcción", "ingresos_sum": 0.0, "porcentaje": 0.0},
-}
-
-POBLACION_DATA = [
-    {"_id": "123456789", "nombre": "Carlos", "apellidos": ["Gutiérrez", "Pérez"], "fechanac": "1997-11-15",
-     "ingresos": 15000.00, "sector_id": 1, "gastos": {"fijos": 4000, "alim": 4000, "ropa": 3000}},
-    {"_id": "777888999", "nombre": "Gerardo", "apellidos": ["Martín", "Duque"], "fechanac": "1961-12-12",
-     "ingresos": 23000.00, "sector_id": 1, "gastos": {"fijos": 6000, "alim": 5000, "ropa": 4000}},
-    {"_id": "222333444", "nombre": "Pedro", "apellidos": ["Sánchez", "González"], "fechanac": "1960-02-01",
-     "ingresos": 22000.00, "sector_id": 1, "gastos": {"fijos": 5000, "alim": 3000, "ropa": 2000}},
-    {"_id": "333444555", "nombre": "María", "apellidos": ["García", "Gil"], "fechanac": "1971-04-10",
-     "ingresos": 19500.00, "sector_id": 1, "gastos": {"fijos": 3000, "alim": 3000, "ropa": 3000}},
-    {"_id": "666884444", "nombre": "Ignacio", "apellidos": ["Costa", "Burgos"], "fechanac": "1982-12-12",
-     "ingresos": 37000.00, "sector_id": 1, "gastos": {"fijos": 5000, "alim": 4500, "ropa": 2500}},
-
-    {"_id": "555666777", "nombre": "Vicente", "apellidos": ["Marañón", "Fernández"], "fechanac": "1978-11-15",
-     "ingresos": 46000.00, "sector_id": 2, "gastos": {"fijos": 8000, "alim": 5000, "ropa": 4000}},
-    {"_id": "666777888", "nombre": "Beatriz", "apellidos": ["Losada", "Gijón"], "fechanac": "1974-04-12",
-     "ingresos": 50000.00, "sector_id": 2, "gastos": {"fijos": 15000, "alim": 8000, "ropa": 5000}},
-    {"_id": "888999000", "nombre": "Fernando", "apellidos": ["Huertas", "Martínez"], "fechanac": "1991-05-30",  # Corregido: "191" -> "1991"
-     "ingresos": 70000.00, "sector_id": 2, "gastos": {"fijos": 20000, "alim": 8000, "ropa": 4500}},
-    {"_id": "999000111", "nombre": "Francisco", "apellidos": ["Fernández", "Merchán"], "fechanac": "1979-03-12",
-     "ingresos": 63000.00, "sector_id": 2, "gastos": {"fijos": 12000, "alim": 7500, "ropa": 4500}},
-    {"_id": "666999333", "nombre": "Paula", "apellidos": ["Ordóñez", "Ruiz"], "fechanac": "1990-02-01",
-     "ingresos": 25000.00, "sector_id": 2, "gastos": {"fijos": 10000, "alim": 3000, "ropa": 2000}},
-
-    {"_id": "987654321", "nombre": "Eva", "apellidos": ["Moreno", "Pozo"], "fechanac": "1974-05-10",
-     "ingresos": 40000.00, "sector_id": 3, "gastos": {"fijos": 9000, "alim": 6000, "ropa": 3000}},
-    {"_id": "111000111", "nombre": "Antonio", "apellidos": ["Muñoz", "Hernández"], "fechanac": "1989-07-01",
-     "ingresos": 25000.00, "sector_id": 3, "gastos": {"fijos": 6500, "alim": 3500, "ropa": 4000}},
-    {"_id": "111000222", "nombre": "Sara", "apellidos": ["Gálvez", "Montes"], "fechanac": "1973-04-07",
-     "ingresos": 40000.00, "sector_id": 3, "gastos": {"fijos": 11000, "alim": 9500, "ropa": 6500}},
-    {"_id": "111000333", "nombre": "Cristina", "apellidos": ["Corral", "Palma"], "fechanac": "1976-05-12",
-     "ingresos": 48000.00, "sector_id": 3, "gastos": {"fijos": 13000, "alim": 7800, "ropa": 5200}},
-    {"_id": "111222333", "nombre": "Susana", "apellidos": ["Ruiz", "Méndez"], "fechanac": "1999-06-22",
-     "ingresos": 18000.00, "sector_id": 3, "gastos": {"fijos": 5000, "alim": 4500, "ropa": 2500}},
-
-    {"_id": "444555666", "nombre": "Ángel", "apellidos": ["Montero", "Salas"], "fechanac": "2000-04-07",
-     "ingresos": 14000.00, "sector_id": 4, "gastos": {"fijos": 3000, "alim": 3000, "ropa": 3000}},
-    {"_id": "888777666", "nombre": "Manuel", "apellidos": ["Vega", "Zarzal"], "fechanac": "1976-11-23",
-     "ingresos": 36000.00, "sector_id": 4, "gastos": {"fijos": 12000, "alim": 6000, "ropa": 3000}},
-    {"_id": "333445555", "nombre": "Margarita", "apellidos": ["Guillén", "Campos"], "fechanac": "1974-03-19",
-     "ingresos": 50000.00, "sector_id": 4, "gastos": {"fijos": 12000, "alim": 7500, "ropa": 6500}},
-    {"_id": "222447777", "nombre": "Fermín", "apellidos": ["Hoz", "Torres"], "fechanac": "1988-08-08",
-     "ingresos": 25000.00, "sector_id": 4, "gastos": {"fijos": 4000, "alim": 3000, "ropa": 2500}},
+sectores = [
+    {"codS": 1, "nombreS": "Agricultura y pesca", "porcentS": 0, "ingresosS": 0},
+    {"codS": 2, "nombreS": "Industria y energía", "porcentS": 0, "ingresosS": 0},
+    {"codS": 3, "nombreS": "Servicios", "porcentS": 0, "ingresosS": 0},
+    {"codS": 4, "nombreS": "Construcción", "porcentS": 0, "ingresosS": 0},
 ]
 
+for s in sectores:
+    r.json().set(f"sector:{s['codS']}", Path.root_path(), s)
+    print(f"Sector {s['codS']} insertado")
 
-def cargar_redis():
-    """Carga datos de sectores y población en Redis."""
+poblacion = [
+    {"dni":"123456789","nombre":"Carlos","apellido1":"Gutiérrez","apellido2":"Pérez","fechanac":"1997-11-15",
+     "direccion":"Pz. Colón","cp":"06300","sexo":"H","ingresos":15000,"gastosFijos":4000,"gastosAlim":4000,
+     "gastosRopa":3000,"sector":1},
+    {"dni":"777888999","nombre":"Gerardo","apellido1":"Martín","apellido2":"Duque","fechanac":"1961-12-12",
+     "direccion":"C. del Atín","cp":"06002","sexo":"H","ingresos":23000,"gastosFijos":6000,"gastosAlim":5000,
+     "gastosRopa":4000,"sector":1},
+    {"dni":"222333444","nombre":"Pedro","apellido1":"Sánchez","apellido2":"González","fechanac":"1960-02-01",
+     "direccion":"C. Ancha","cp":"06300","sexo":"H","ingresos":22000,"gastosFijos":5000,"gastosAlim":3000,
+     "gastosRopa":2000,"sector":1},
+    {"dni":"333444555","nombre":"María","apellido1":"García","apellido2":"Gil","fechanac":"1971-04-10",
+     "direccion":"C. Diagonal","cp":"06400","sexo":"M","ingresos":19500,"gastosFijos":3000,"gastosAlim":3000,
+     "gastosRopa":3000,"sector":1},
+    {"dni":"666884444","nombre":"Ignacio","apellido1":"Costa","apellido2":"Burgos","fechanac":"1982-12-12",
+     "direccion":"C. Descubrimiento","cp":"10005","sexo":"H","ingresos":37000,"gastosFijos":5000,"gastosAlim":4500,
+     "gastosRopa":2500,"sector":1},
+    {"dni":"555666777","nombre":"Vicente","apellido1":"Marañán","apellido2":"Fernández","fechanac":"1978-11-15",
+     "direccion":"Pz. América","cp":"10600","sexo":"H","ingresos":46000,"gastosFijos":8000,"gastosAlim":5000,
+     "gastosRopa":4000,"sector":2},
+    {"dni":"666777888","nombre":"Beatriz","apellido1":"Losada","apellido2":"Gijón","fechanac":"1974-04-12",
+     "direccion":"Av. Principal","cp":"06400","sexo":"M","ingresos":50000,"gastosFijos":15000,"gastosAlim":8000,
+     "gastosRopa":5000,"sector":2},
+    {"dni":"888999000","nombre":"Fernando","apellido1":"Huertas","apellido2":"Martínez","fechanac":"1971-05-30",
+     "direccion":"C. Mayor","cp":"06002","sexo":"H","ingresos":70000,"gastosFijos":20000,"gastosAlim":8000,
+     "gastosRopa":4500,"sector":2},
+    {"dni":"999000111","nombre":"Francisco","apellido1":"Fernández","apellido2":"Merchán","fechanac":"1979-03-12",
+     "direccion":"C. Poniente","cp":"10800","sexo":"H","ingresos":63000,"gastosFijos":12000,"gastosAlim":7500,
+     "gastosRopa":4500,"sector":2},
+    {"dni":"666999333","nombre":"Paula","apellido1":"Ordóñez","apellido2":"Ruiz","fechanac":"1990-02-01",
+     "direccion":"C. Atlántico","cp":"06800","sexo":"M","ingresos":25000,"gastosFijos":10000,"gastosAlim":3000,
+     "gastosRopa":2000,"sector":2},
+    {"dni":"987654321","nombre":"Eva","apellido1":"Moreno","apellido2":"Pozo","fechanac":"1974-05-10",
+     "direccion":"C. Justicia","cp":"10005","sexo":"M","ingresos":40000,"gastosFijos":9000,"gastosAlim":6000,
+     "gastosRopa":3000,"sector":3},
+    {"dni":"111000111","nombre":"Antonio","apellido1":"Muñoz","apellido2":"Hernández","fechanac":"1989-07-01",
+     "direccion":"C. Constitución","cp":"06800","sexo":"H","ingresos":25000,"gastosFijos":6500,"gastosAlim":3500,
+     "gastosRopa":4000,"sector":3},
+    {"dni":"111000222","nombre":"Sara","apellido1":"Gálvez","apellido2":"Montes","fechanac":"1973-04-07",
+     "direccion":"C. Cádiz","cp":"10300","sexo":"M","ingresos":40000,"gastosFijos":11000,"gastosAlim":9500,
+     "gastosRopa":6500,"sector":3},
+    {"dni":"111000333","nombre":"Cristina","apellido1":"Corral","apellido2":"Palma","fechanac":"1976-05-12",
+     "direccion":"C. Ermita","cp":"10600","sexo":"M","ingresos":48000,"gastosFijos":13000,"gastosAlim":7800,
+     "gastosRopa":5200,"sector":3},
+    {"dni":"111222333","nombre":"Susana","apellido1":"Ruiz","apellido2":"Méndez","fechanac":"1999-06-22",
+     "direccion":"Av. Libertad","cp":"10800","sexo":"M","ingresos":18000,"gastosFijos":5000,"gastosAlim":4500,
+     "gastosRopa":2500,"sector":3},
+    {"dni":"444555666","nombre":"Ángel","apellido1":"Montero","apellido2":"Salas","fechanac":"2000-04-07",
+     "direccion":"C. Tranquilidad","cp":"10300","sexo":"H","ingresos":14000,"gastosFijos":3000,"gastosAlim":3000,
+     "gastosRopa":3000,"sector":4},
+    {"dni":"888777666","nombre":"Manuel","apellido1":"Vega","apellido2":"Zarzal","fechanac":"1976-11-23",
+     "direccion":"Pz. Azul","cp":"10005","sexo":"H","ingresos":36000,"gastosFijos":12000,"gastosAlim":6000,
+     "gastosRopa":3000,"sector":4},
+    {"dni":"333445555","nombre":"Margarita","apellido1":"Guillón","apellido2":"Campos","fechanac":"1974-03-19",
+     "direccion":"Av. Héroes","cp":"06800","sexo":"M","ingresos":50000,"gastosFijos":12000,"gastosAlim":7500,
+     "gastosRopa":6500,"sector":4},
+    {"dni":"222447777","nombre":"Fermín","apellido1":"Hoz","apellido2":"Torres","fechanac":"1988-08-08",
+     "direccion":"C. Curva","cp":"06002","sexo":"H","ingresos":25000,"gastosFijos":4000,"gastosAlim":3000,
+     "gastosRopa":2500,"sector":4}
+]
 
-    r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+for p in poblacion:
+    r.json().set(f"poblacion:{p['dni']}", Path.root_path(), p)
+    print(f"Población {p['dni']} insertada")
 
-    # 1. Cargar sectores como hashes
-    for codS, data in SECTORES_DATA.items():
-        r.hset(f"sector:{codS}", mapping=data)
-
-    # 2. Cargar población
-    for persona in POBLACION_DATA:
-        key = f"persona:{persona['_id']}"
-        r.set(key, json.dumps(persona))
-
-    print("Redis: Carga completa.")
-
-
-if __name__ == "__main__":
-    cargar_redis()
