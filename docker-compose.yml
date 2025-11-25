@@ -1,6 +1,9 @@
 version: '3.8'
 
 services:
+  # -------------------------
+  # SERVICIO 1: RIAK KV
+  # -------------------------
   riak:
     image: basho/riak-kv
     container_name: riak_node
@@ -9,8 +12,6 @@ services:
       - "8098:8098"
     volumes:
       - riak_data_vol:/var/lib/riak
-      # ✅ CORRECTO: Montamos user.conf.
-      # Riak leerá esto Y SU propia configuración base.
       - ./config/user.conf:/etc/riak/user.conf
     healthcheck:
       test: ["CMD", "riak-admin", "test"]
@@ -18,5 +19,18 @@ services:
       timeout: 5s
       retries: 5
 
+  # -------------------------
+  # SERVICIO 2: REDIS STACK
+  # -------------------------
+  redis:
+    image: redis/redis-stack:latest
+    container_name: redis-stack
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    volumes:
+      - redis_data_vol:/data
+
 volumes:
   riak_data_vol:
+  redis_data_vol:
