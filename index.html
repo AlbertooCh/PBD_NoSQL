@@ -21,7 +21,7 @@
     <aside class="w-64 bg-black border-r border-slate-800 flex flex-col z-20">
         <div class="p-6 border-b border-slate-900 flex items-center gap-2">
             <div class="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"></div>
-            <h1 class="font-bold text-lg tracking-wider text-white">NoSQL <span class="text-blue-500">BENCH</span></h1>
+            <h1 class="font-bold text-lg tracking-wider text-white">NoSQL <span class="text-blue-500">LAB</span></h1>
         </div>
 
         <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -33,12 +33,29 @@
                 💾 <span>Cargar Datos</span>
             </button>
             <button onclick="showSection('benchmark')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white hover:text-yellow-400 border border-transparent hover:border-yellow-900">
-                🚀 <span>Comparativa (Benchmark)</span>
+                🚀 <span>Comparativa</span>
             </button>
 
-            <div class="mt-6 text-xs font-bold text-slate-600 uppercase tracking-widest mb-2 px-2">Operaciones</div>
+            <div class="mt-6 text-xs font-bold text-slate-600 uppercase tracking-widest mb-2 px-2">CRUD Básico</div>
+            <button onclick="loadOperation('listar')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white">
+                📜 <span>Listar Todo</span>
+            </button>
+            <button onclick="loadOperation('leer')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white">
+                👁️ <span>Leer (Por ID)</span>
+            </button>
+            <button onclick="loadOperation('insertar')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white">
+                ➕ <span>Insertar Nuevo</span>
+            </button>
+            <button onclick="loadOperation('actualizar')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white">
+                ✏️ <span>Actualizar</span>
+            </button>
+            <button onclick="loadOperation('borrar')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white hover:text-red-400">
+                🗑️ <span>Borrar</span>
+            </button>
+
+            <div class="mt-6 text-xs font-bold text-slate-600 uppercase tracking-widest mb-2 px-2">Consultas Avanzadas</div>
             <button onclick="loadOperation('indexar')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white">
-                🏷️ <span>Indexar Datos (2i)</span>
+                🏷️ <span>Indexar (2i)</span>
             </button>
             <button onclick="loadOperation('rango')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white">
                 🔍 <span>Búsqueda Rango</span>
@@ -55,81 +72,39 @@
     <!-- CONTENIDO PRINCIPAL -->
     <main class="flex-1 flex flex-col relative overflow-hidden bg-slate-900">
 
-        <!-- VISTA: BIENVENIDA -->
+        <!-- BIENVENIDA -->
         <div id="welcome-view" class="absolute inset-0 flex flex-col items-center justify-center text-center p-10 fade-in z-10">
             <div class="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent text-7xl font-extrabold mb-6">
-                NoSQL Battle Arena
+                NoSQL Operations
             </div>
             <p class="text-xl text-slate-400 max-w-2xl mb-10">
-                Entorno interactivo para pruebas de rendimiento y sintaxis.
+                Explora las operaciones básicas (CRUD) y avanzadas en MongoDB, Redis y Riak.
             </p>
-            <div class="grid grid-cols-3 gap-6 w-full max-w-5xl">
-                <div class="p-8 bg-slate-800/50 rounded-2xl border border-slate-800 hover:border-green-500/50 transition duration-300">
-                    <h3 class="text-green-400 font-bold text-2xl mb-2">MongoDB</h3>
-                    <p class="text-sm text-slate-500">Documental. Equilibrio entre flexibilidad y velocidad.</p>
-                </div>
-                <div class="p-8 bg-slate-800/50 rounded-2xl border border-slate-800 hover:border-red-500/50 transition duration-300">
-                    <h3 class="text-red-400 font-bold text-2xl mb-2">Redis</h3>
-                    <p class="text-sm text-slate-500">In-Memory. Velocidad extrema, persistencia opcional.</p>
-                </div>
-                <div class="p-8 bg-slate-800/50 rounded-2xl border border-slate-800 hover:border-orange-500/50 transition duration-300">
-                    <h3 class="text-orange-400 font-bold text-2xl mb-2">Riak KV</h3>
-                    <p class="text-sm text-slate-500">Distribuido. Alta disponibilidad y tolerancia a fallos.</p>
-                </div>
+            <div class="grid grid-cols-3 gap-6 w-full max-w-4xl">
+                <div class="p-6 bg-slate-800/50 rounded-xl border border-slate-800"><h3 class="text-green-400 font-bold">MongoDB</h3><p class="text-xs text-slate-500">Document Store</p></div>
+                <div class="p-6 bg-slate-800/50 rounded-xl border border-slate-800"><h3 class="text-red-400 font-bold">Redis</h3><p class="text-xs text-slate-500">In-Memory KV</p></div>
+                <div class="p-6 bg-slate-800/50 rounded-xl border border-slate-800"><h3 class="text-orange-400 font-bold">Riak</h3><p class="text-xs text-slate-500">Distributed KV</p></div>
             </div>
         </div>
 
-        <!-- VISTA: BENCHMARK -->
+        <!-- BENCHMARK -->
         <div id="benchmark-view" class="hidden absolute inset-0 flex flex-col p-8 fade-in z-10 bg-slate-900">
-            <h2 class="text-3xl font-bold text-white mb-6 flex items-center gap-3">
-                <span>🚀</span> Test de Rendimiento
-            </h2>
-            <div class="bg-slate-800 rounded-xl p-6 mb-6 border border-slate-700">
-                <label class="block text-sm text-slate-400 mb-2">Selecciona la prueba a ejecutar:</label>
+            <h2 class="text-3xl font-bold text-white mb-6">🚀 Test de Rendimiento</h2>
+            <div class="bg-slate-800 rounded-xl p-6 mb-6">
                 <div class="flex gap-4">
-                    <button onclick="runBenchmark('rango')" class="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded text-white font-bold transition">Búsqueda Rango</button>
-                    <button onclick="runBenchmark('filtro')" class="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded text-white font-bold transition">Filtro Complejo</button>
-                    <button onclick="runBenchmark('agregacion')" class="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded text-white font-bold transition">Agregación</button>
+                    <button onclick="runBenchmark('insertar')" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold transition">Insertar</button>
+                    <button onclick="runBenchmark('leer')" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold transition">Lectura ID</button>
+                    <button onclick="runBenchmark('rango')" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold transition">Rango 2i</button>
                 </div>
             </div>
             <div class="flex-1 space-y-6">
-                <!-- REDIS BAR -->
-                <div class="relative">
-                    <div class="flex justify-between text-sm mb-1">
-                        <span class="font-bold text-red-400">REDIS STACK</span>
-                        <span id="bench-time-redis" class="text-slate-400">0 ms</span>
-                    </div>
-                    <div class="h-8 bg-slate-800 rounded-full overflow-hidden">
-                        <div id="bench-bar-redis" class="h-full bg-red-500 progress-bar w-0 relative flex items-center justify-end px-2"></div>
-                    </div>
-                </div>
-                <!-- MONGO BAR -->
-                <div class="relative">
-                    <div class="flex justify-between text-sm mb-1">
-                        <span class="font-bold text-green-400">MONGODB</span>
-                        <span id="bench-time-mongo" class="text-slate-400">0 ms</span>
-                    </div>
-                    <div class="h-8 bg-slate-800 rounded-full overflow-hidden">
-                        <div id="bench-bar-mongo" class="h-full bg-green-500 progress-bar w-0"></div>
-                    </div>
-                </div>
-                <!-- RIAK BAR -->
-                <div class="relative">
-                    <div class="flex justify-between text-sm mb-1">
-                        <span class="font-bold text-orange-400">RIAK KV</span>
-                        <span id="bench-time-riak" class="text-slate-400">0 ms</span>
-                    </div>
-                    <div class="h-8 bg-slate-800 rounded-full overflow-hidden">
-                        <div id="bench-bar-riak" class="h-full bg-orange-500 progress-bar w-0"></div>
-                    </div>
-                </div>
-                <div id="bench-log" class="mt-8 p-4 bg-black rounded font-mono text-xs text-slate-500 h-32 overflow-auto border border-slate-800">
-                    // Logs del benchmark...
-                </div>
+                <div class="relative"><div class="flex justify-between text-sm mb-1"><span class="font-bold text-red-400">REDIS</span><span id="bench-time-redis" class="text-slate-400">0 ms</span></div><div class="h-8 bg-slate-800 rounded-full overflow-hidden"><div id="bench-bar-redis" class="h-full bg-red-500 progress-bar w-0"></div></div></div>
+                <div class="relative"><div class="flex justify-between text-sm mb-1"><span class="font-bold text-green-400">MONGO</span><span id="bench-time-mongo" class="text-slate-400">0 ms</span></div><div class="h-8 bg-slate-800 rounded-full overflow-hidden"><div id="bench-bar-mongo" class="h-full bg-green-500 progress-bar w-0"></div></div></div>
+                <div class="relative"><div class="flex justify-between text-sm mb-1"><span class="font-bold text-orange-400">RIAK</span><span id="bench-time-riak" class="text-slate-400">0 ms</span></div><div class="h-8 bg-slate-800 rounded-full overflow-hidden"><div id="bench-bar-riak" class="h-full bg-orange-500 progress-bar w-0"></div></div></div>
             </div>
         </div>
 
-        <!-- VISTA: OPERACIONES -->
+        <!-- VISTA OPERACIONES -->
         <div id="operation-view" class="hidden flex-1 flex flex-col h-full">
             <header class="bg-slate-950 border-b border-slate-800 p-6 flex justify-between items-center">
                 <div>
@@ -146,11 +121,11 @@
             <div class="flex-1 flex overflow-hidden">
                 <div class="w-1/2 flex flex-col border-r border-slate-800 bg-slate-900">
                     <div class="p-6 border-b border-slate-800 bg-slate-800/30">
-                        <h3 class="text-blue-400 font-bold uppercase text-xs tracking-widest mb-3">🛠️ Configurar Parámetros</h3>
+                        <h3 class="text-blue-400 font-bold uppercase text-xs tracking-widest mb-3">🛠️ Parámetros</h3>
                         <div id="input-container" class="grid grid-cols-2 gap-4"></div>
                     </div>
                     <div class="flex-1 p-6 overflow-y-auto">
-                        <h3 class="text-slate-500 font-bold uppercase text-xs tracking-widest mb-2">Explicación & Código:</h3>
+                        <h3 class="text-slate-500 font-bold uppercase text-xs tracking-widest mb-2">Código:</h3>
                         <p id="op-explanation" class="text-slate-300 mb-4 text-sm leading-relaxed"></p>
                         <div class="relative group">
                             <pre><code id="op-code" class="language-python rounded-lg bg-black p-4 text-sm border border-slate-700 shadow-inner"></code></pre>
@@ -162,12 +137,12 @@
                 </div>
                 <div class="w-1/2 bg-black flex flex-col font-mono text-sm">
                     <div class="bg-slate-900 text-slate-400 px-4 py-2 text-xs border-b border-slate-800 flex justify-between">
-                        <span>TERMINAL DE SALIDA</span>
+                        <span>TERMINAL</span>
                         <span id="exec-time" class="text-yellow-500"></span>
                     </div>
                     <div id="console-output" class="flex-1 p-4 overflow-y-auto space-y-1 text-green-400 font-light"></div>
                     <div class="h-1/3 border-t border-slate-800 bg-slate-900/50 flex flex-col">
-                        <div class="bg-slate-900 text-slate-400 px-4 py-1 text-xs border-b border-slate-800">RESULTADO (JSON)</div>
+                        <div class="bg-slate-900 text-slate-400 px-4 py-1 text-xs border-b border-slate-800">JSON RAW</div>
                         <div id="json-output" class="flex-1 p-4 overflow-auto text-blue-300 text-xs whitespace-pre">{}</div>
                     </div>
                 </div>
@@ -181,57 +156,84 @@
         let currentDB = 'mongo';
 
         const KNOWLEDGE = {
+            // --- CRUD BÁSICO ---
+            listar: {
+                title: "Listar Todo",
+                subtitle: "Obtener todas las claves/documentos de una colección.",
+                inputs: [],
+                mongo: { desc: "Scan completo de colección.", code: `db.poblacion.find({})` },
+                redis: { desc: "Comando SCAN (iterador) o KEYS * (peligroso en prod).", code: `SCAN 0 MATCH poblacion:*` },
+                riak: { desc: "Obtener lista de claves (costoso) y luego iterar objetos.", code: `keys = bucket.get_keys()\nfor k in keys:\n  print(bucket.get(k).data)` }
+            },
+            leer: {
+                title: "Leer por ID",
+                subtitle: "Recuperar un objeto específico usando su Clave Primaria (DNI).",
+                inputs: [{id: 'dni', label: 'DNI a buscar', type: 'text', val: '555888999'}],
+                mongo: { desc: "Búsqueda directa por campo indexado.", code: `db.poblacion.findOne({ dni: "{{dni}}" })` },
+                redis: { desc: "Acceso O(1) a Hash.", code: `HGETALL poblacion:{{dni}}` },
+                riak: { desc: "GET HTTP directo a la key.", code: `get_object('poblacion', '{{dni}}')` }
+            },
+            insertar: {
+                title: "Insertar Nuevo",
+                subtitle: "Crear un nuevo registro.",
+                inputs: [
+                    {id: 'dni', label: 'DNI', type: 'text', val: '555888999'},
+                    {id: 'nombre', label: 'Nombre', type: 'text', val: 'Laura'},
+                    {id: 'ingresos', label: 'Ingresos', type: 'number', val: 30000},
+                    {id: 'sector', label: 'Sector', type: 'number', val: 2}
+                ],
+                mongo: { desc: "Insertar documento JSON.", code: `db.poblacion.insertOne({\n  dni: "{{dni}}",\n  nombre: "{{nombre}}", ...\n})` },
+                redis: { desc: "Crear Hash con campos.", code: `HSET poblacion:{{dni}} nombre "{{nombre}}" ...` },
+                riak: { desc: "PUT a la clave. ¡Importante añadir índices manualmente!", code: `data = { ... }\nidxs = {'ingresos_int': {{ingresos}} ...}\nstore_object('poblacion', '{{dni}}', data, idxs)` }
+            },
+            actualizar: {
+                title: "Actualizar",
+                subtitle: "Modificar un registro existente (Simulamos cambio de ingresos).",
+                inputs: [{id: 'dni', label: 'DNI a editar', type: 'text', val: '555888999'}],
+                mongo: { desc: "Update atómico in-place.", code: `db.poblacion.updateOne(\n  { dni: "{{dni}}" },\n  { $inc: { ingresos: 5000 } }\n)` },
+                redis: { desc: "Sobrescribir campo en Hash.", code: `HSET poblacion:{{dni}} ingresos NEW_VAL` },
+                riak: { desc: "Fetch -> Modify -> Store (Sobrescribe todo el objeto).", code: `obj = bucket.get('{{dni}}')\nobj.data['ingresos'] += 5000\nobj.store()` }
+            },
+            borrar: {
+                title: "Borrar",
+                subtitle: "Eliminar un registro permanentemente.",
+                inputs: [{id: 'dni', label: 'DNI a borrar', type: 'text', val: '555888999'}],
+                mongo: { desc: "Delete one document.", code: `db.poblacion.deleteOne({ dni: "{{dni}}" })` },
+                redis: { desc: "Eliminar clave.", code: `DEL poblacion:{{dni}}` },
+                riak: { desc: "Delete HTTP.", code: `bucket.delete('{{dni}}')` }
+            },
+            // --- AVANZADO (Ya existente) ---
             indexar: {
                 title: "Indexar Datos (2i)",
-                subtitle: "Añadir metadatos a objetos existentes para permitir búsquedas.",
+                subtitle: "Recalcular índices para búsquedas.",
                 inputs: [],
-                mongo: { desc: "Creación de índices B-Tree.", code: `db.poblacion.createIndex({ ingresos: 1 })\ndb.poblacion.createIndex({ sector: 1 })` },
-                redis: { desc: "Creación de índice RediSearch.", code: `FT.CREATE idx:poblacion ON HASH PREFIX 1 "poblacion:" SCHEMA ...` },
-                riak: {
-                    desc: "Recorrer las claves y añadir headers 'x-riak-index-...' (PUT).",
-                    code: `def indexar_datos_existentes():\n  keys = get_keys('poblacion')\n  for k in keys:\n    data = get_object('poblacion', k)\n    if data:\n      mis_indices = {\n        'ingresos_int': data['ingresos'],\n        'sector_int': data['sector'],\n        'sexo_bin': data['sexo']\n      }\n      store_object_with_indexes('poblacion', k, data, mis_indices)`
-                }
+                mongo: { desc: "Crear índices B-Tree.", code: `db.poblacion.createIndex({ingresos:1})` },
+                redis: { desc: "Crear índice RediSearch.", code: `FT.CREATE ...` },
+                riak: { desc: "Recorrer todos los objetos y hacer PUT con headers.", code: `for k in keys: store_with_headers(...)` }
             },
             rango: {
-                title: "Búsqueda por Rango",
-                subtitle: "Encontrar registros entre dos valores numéricos.",
-                inputs: [
-                    {id: 'min_val', label: 'Ingreso Mínimo (€)', type: 'number', val: 20000},
-                    {id: 'max_val', label: 'Ingreso Máximo (€)', type: 'number', val: 50000}
-                ],
-                mongo: { desc: "Operadores $gte y $lte.", code: `db.poblacion.find({\n  ingresos: { $gte: {{min_val}}, $lte: {{max_val}} }\n})` },
-                redis: { desc: "RediSearch query numérica.", code: `FT.SEARCH idx:poblacion "@ingresos:[{{min_val}} {{max_val}}]"` },
-                riak: {
-                    desc: "Uso de query_2i_range sobre 'ingresos_int'.",
-                    code: `def buscar_por_ingresos(min_ing={{min_val}}, max_ing={{max_val}}):\n  # 1. Obtenemos claves\n  keys = query_2i_range('poblacion', 'ingresos_int', min_ing, max_ing)\n  \n  # 2. Obtenemos objetos\n  for k in keys:\n    d = get_object('poblacion', k)\n    print(d)`
-                }
+                title: "Búsqueda Rango",
+                subtitle: "Filtrar por rango de ingresos.",
+                inputs: [{id: 'min_val', label: 'Min', type: 'number', val: 20000}, {id: 'max_val', label: 'Max', type: 'number', val: 50000}],
+                mongo: { desc: "$gte y $lte.", code: `find({ ingresos: { $gte: {{min_val}}, $lte: {{max_val}} } })` },
+                redis: { desc: "Query numérica.", code: `FT.SEARCH ... @ingresos:[{{min_val}} {{max_val}}]` },
+                riak: { desc: "2i Range Query.", code: `bucket.get_index('ingresos_int', {{min_val}}, {{max_val}})` }
             },
             filtro: {
                 title: "Filtro Complejo",
-                subtitle: "Filtrar por Sector y Sexo simultáneamente.",
-                inputs: [
-                    {id: 'sector', label: 'Sector ID (1-4)', type: 'number', val: 2},
-                    {id: 'sexo', label: 'Sexo (H/M)', type: 'select', val: 'M', opts: ['H', 'M']}
-                ],
-                mongo: { desc: "Consulta compuesta nativa.", code: `db.poblacion.find({ sector: {{sector}}, sexo: "{{sexo}}" })` },
-                redis: { desc: "Intersección de índices.", code: `FT.SEARCH idx:poblacion "@sector:[{{sector}} {{sector}}] @sexo:{{{sexo}}}"` },
-                riak: {
-                    desc: "Filtro primario en Riak (Sector) + Filtro secundario en App (Sexo).",
-                    code: `def filtrar_por_sector_sexo(sector={{sector}}, sexo='{{sexo}}'):\n  # 1. Filtro primario eficiente\n  keys = query_2i_exact('poblacion', 'sector_int', sector)\n\n  # 2. Filtro secundario: Application Side\n  for k in keys:\n    d = get_object('poblacion', k)\n    if d and d['sexo'] == sexo:\n      print(d)`
-                }
+                subtitle: "Sector AND Sexo.",
+                inputs: [{id: 'sector', label: 'Sector', type: 'number', val: 2}, {id: 'sexo', label: 'Sexo', type: 'select', val: 'M', opts:['H','M']}],
+                mongo: { desc: "Query compuesta.", code: `find({ sector: {{sector}}, sexo: "{{sexo}}" })` },
+                redis: { desc: "Intersección índices.", code: `FT.SEARCH ... @sector:[{{sector}} {{sector}}] ...` },
+                riak: { desc: "App Side Join.", code: `keys = get_index('sector', {{sector}})\nresults = [get(k) for k in keys if k.sexo=='{{sexo}}']` }
             },
             agregacion: {
                 title: "Agregación",
-                subtitle: "Sumar ingresos de un sector.",
-                inputs: [
-                    {id: 'sector', label: 'Sector ID (1-4)', type: 'number', val: 2}
-                ],
-                mongo: { desc: "Aggregation Pipeline.", code: `db.poblacion.aggregate([...])` },
-                redis: { desc: "RediSearch Aggregation.", code: `FT.AGGREGATE ...` },
-                riak: {
-                    desc: "Descarga de claves y suma en cliente (Application Side Aggregation).",
-                    code: `def guardar_resumen_sector():\n  keys = get_keys('poblacion')\n  resumen = {}\n  for k in keys:\n    p = get_object('poblacion', k)\n    if p and str(p['sector']) == '{{sector}}':\n      resumen.setdefault(str(p['sector']), 0)\n      resumen[str(p['sector'])] += p['ingresos']\n  store_object_with_indexes('resumenes', ...)`
-                }
+                subtitle: "Suma ingresos por sector.",
+                inputs: [{id: 'sector', label: 'Sector', type: 'number', val: 2}],
+                mongo: { desc: "Pipeline.", code: `aggregate([{ $match... $group... }])` },
+                redis: { desc: "FT.AGGREGATE.", code: `FT.AGGREGATE ... REDUCE SUM ...` },
+                riak: { desc: "Cálculo en cliente.", code: `total = sum(obj.ingresos for obj in sector_{{sector}})` }
             }
         };
 
@@ -241,12 +243,9 @@
         }
 
         async function loadData() {
-            if(!confirm("Se borrarán y recargarán datos. ¿Seguro?")) return;
-            try {
-                const res = await fetch(`${API_URL}/load-data`);
-                const data = await res.json();
-                alert(data.msg || "Datos cargados");
-            } catch(e) { alert("Error conectando al backend"); }
+            if(!confirm("Se reiniciarán los datos. ¿Continuar?")) return;
+            const res = await fetch(`${API_URL}/load-data`);
+            alert((await res.json()).msg);
         }
 
         function loadOperation(op) {
@@ -262,10 +261,7 @@
         function renderInputs(inputs) {
             const container = document.getElementById('input-container');
             container.innerHTML = '';
-            if(!inputs || inputs.length === 0) {
-                container.innerHTML = '<div class="text-slate-500 text-xs italic">Sin parámetros configurables</div>';
-                return;
-            }
+            if(!inputs.length) container.innerHTML = '<div class="text-xs text-slate-500 italic">Sin parámetros</div>';
             inputs.forEach(inp => {
                 const div = document.createElement('div');
                 div.className = "flex flex-col";
@@ -283,25 +279,20 @@
                     });
                 } else {
                     field = document.createElement('input');
-                    field.type = inp.type;
-                    field.value = inp.val;
+                    field.type = inp.type; field.value = inp.val;
                 }
                 field.id = `input-${inp.id}`;
-                field.className = "bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white focus:border-blue-500 outline-none transition";
-                field.addEventListener('input', () => updateCodeView());
-                field.addEventListener('change', () => updateCodeView());
-                div.appendChild(label);
-                div.appendChild(field);
-                container.appendChild(div);
+                field.className = "bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white focus:border-blue-500 outline-none";
+                field.addEventListener('input', updateCodeView);
+                field.addEventListener('change', updateCodeView);
+                div.appendChild(label); div.appendChild(field); container.appendChild(div);
             });
         }
 
         function getParamValues() {
             if(!currentOp || !KNOWLEDGE[currentOp].inputs) return {};
             const vals = {};
-            KNOWLEDGE[currentOp].inputs.forEach(inp => {
-                vals[inp.id] = document.getElementById(`input-${inp.id}`).value;
-            });
+            KNOWLEDGE[currentOp].inputs.forEach(inp => vals[inp.id] = document.getElementById(`input-${inp.id}`).value);
             return vals;
         }
 
@@ -309,9 +300,7 @@
             const info = KNOWLEDGE[currentOp][currentDB];
             let code = info.code;
             const params = getParamValues();
-            for (const [key, val] of Object.entries(params)) {
-                code = code.replaceAll(`{{${key}}}`, val);
-            }
+            for (const [key, val] of Object.entries(params)) code = code.replaceAll(`{{${key}}}`, val);
             document.getElementById('op-explanation').innerText = info.desc;
             const codeEl = document.getElementById('op-code');
             codeEl.textContent = code;
@@ -320,58 +309,40 @@
 
         function selectDB(db) {
             currentDB = db;
-            document.querySelectorAll('.tab-btn').forEach(b => {
-                if(b.id === `tab-${db}`) b.classList.add('bg-blue-600', 'text-white');
-                else b.classList.remove('bg-blue-600', 'text-white');
-            });
+            document.querySelectorAll('.tab-btn').forEach(b => b.id === `tab-${db}` ? b.classList.add('bg-blue-600', 'text-white') : b.classList.remove('bg-blue-600', 'text-white'));
             document.getElementById('btn-db-name').innerText = db.toUpperCase();
             updateCodeView();
             document.getElementById('console-output').innerHTML = '';
             document.getElementById('json-output').innerText = '{}';
-            document.getElementById('exec-time').innerText = '';
         }
 
         async function runExecution() {
             const params = new URLSearchParams(getParamValues());
             const url = `${API_URL}/execute/${currentOp}/${currentDB}?${params}`;
-            document.getElementById('console-output').innerHTML = '<div class="text-yellow-500 animate-pulse">⏳ Ejecutando...</div>';
+            document.getElementById('console-output').innerHTML = '<div class="text-yellow-500 animate-pulse">⏳ Procesando...</div>';
             try {
                 const res = await fetch(url);
                 const data = await res.json();
                 const consoleDiv = document.getElementById('console-output');
                 consoleDiv.innerHTML = '';
-                data.trace.forEach(log => {
-                    const div = document.createElement('div');
-                    div.innerText = log;
-                    consoleDiv.appendChild(div);
-                });
+                data.trace.forEach(l => { const d=document.createElement('div'); d.innerText=l; consoleDiv.appendChild(d); });
                 document.getElementById('json-output').innerText = JSON.stringify(data.data, null, 2);
                 document.getElementById('exec-time').innerText = `${data.time_ms} ms`;
-            } catch(e) { alert("Error de conexión"); }
+            } catch(e) { alert("Error backend"); }
         }
 
         async function runBenchmark(op) {
-            const logDiv = document.getElementById('bench-log');
-            logDiv.innerHTML = `<div>🏁 Iniciando carrera para: ${op.toUpperCase()}</div>`;
-            ['redis', 'mongo', 'riak'].forEach(db => {
-                document.getElementById(`bench-bar-${db}`).style.width = '0%';
-                document.getElementById(`bench-time-${db}`).innerText = '...';
-            });
-            const params = new URLSearchParams({ min_val: 20000, max_val: 50000, sector: 2, sexo: 'M' });
-            const dbs = ['redis', 'mongo', 'riak'];
+            ['redis','mongo','riak'].forEach(db => { document.getElementById(`bench-bar-${db}`).style.width='0%'; document.getElementById(`bench-time-${db}`).innerText='...'; });
+            const params = new URLSearchParams({ min_val:20000, max_val:50000, sector:2, sexo:'M', dni:'555888999', nombre:'BenchUser', ingresos:30000 });
             const results = [];
-            for (const db of dbs) {
-                logDiv.innerHTML += `<div>⏳ Corriendo ${db}...</div>`;
+            for (const db of ['redis','mongo','riak']) {
                 const res = await fetch(`${API_URL}/execute/${op}/${db}?${params}`);
                 const data = await res.json();
-                results.push({ db, time: data.time_ms });
+                results.push({db, time: data.time_ms});
                 document.getElementById(`bench-time-${db}`).innerText = `${data.time_ms} ms`;
             }
-            const maxTime = Math.max(...results.map(r => r.time));
-            results.forEach(r => {
-                const pct = (r.time / maxTime) * 100;
-                document.getElementById(`bench-bar-${r.db}`).style.width = `${pct}%`;
-            });
+            const max = Math.max(...results.map(r=>r.time));
+            results.forEach(r => document.getElementById(`bench-bar-${r.db}`).style.width = `${(r.time/max)*100}%`);
         }
     </script>
 </body>
