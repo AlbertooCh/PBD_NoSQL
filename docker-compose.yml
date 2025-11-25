@@ -1,21 +1,22 @@
 version: '3.8'
+
 services:
-  # Riak: Base de datos Key-Value distribuida
   riak:
     image: basho/riak-kv
+    container_name: riak_node
     ports:
-      - "8087:8087" # Protocol Buffers (para clientes Python nativos)
-      - "8098:8098" # HTTP (para pruebas con curl y requests)
+      - "8087:8087"
+      - "8098:8098"
+    volumes:
+      - riak_data_vol:/var/lib/riak
+      # ✅ CORRECTO: Montamos user.conf.
+      # Riak leerá esto Y SU propia configuración base.
+      - ./config/user.conf:/etc/riak/user.conf
+    healthcheck:
+      test: ["CMD", "riak-admin", "test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  # MongoDB: Base de datos documental
-  mongo:
-    image: mongo:latest
-    ports: ["27017:27017"]
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: pass
-
-  # Redis: Base de datos en memoria
-  redis:
-    image: redis:alpine
-    ports: ["6379:6379"]
+volumes:
+  riak_data_vol:
