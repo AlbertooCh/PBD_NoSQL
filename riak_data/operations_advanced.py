@@ -21,7 +21,7 @@ def check_connection():
 # --- FUNCIONES AUXILIARES DE BAJO NIVEL ---
 
 def get_keys(bucket):
-    """ Obtiene todas las claves de un bucket (simulado con keys=true) """
+    """ Obtiene todas las claves de un bucket  """
     url = f"{RIAK_HOST}/buckets/{bucket}/keys?keys=true"
     resp = requests.get(url)
     if resp.status_code == 200:
@@ -53,7 +53,6 @@ def store_object_with_indexes(bucket, key, data, indexes=None):
     if indexes:
         for idx_name, idx_value in indexes.items():
             header_name = f"x-riak-index-{idx_name}"
-            # Las cabeceras HTTP deben ser strings
             headers[header_name] = str(idx_value)
 
     resp = requests.put(url, data=json.dumps(data), headers=headers)
@@ -90,13 +89,11 @@ def indexar_datos_existentes():
     for k in keys:
         data = get_object('poblacion', k)
         if data:
-            # Definimos los índices basándonos en los datos
             mis_indices = {
                 'ingresos_int': data['ingresos'],
                 'sector_int': data['sector'],
                 'sexo_bin': data['sexo']
             }
-            # Al hacer PUT con los nuevos headers, Riak actualiza los índices del objeto
             store_object_with_indexes('poblacion', k, data, mis_indices)
             count += 1
 
@@ -109,7 +106,7 @@ def buscar_por_ingresos(min_ing=0, max_ing=100000):
     # 1. Obtenemos las claves que cumplen el criterio 2i
     keys_found = query_2i_range('poblacion', 'ingresos_int', min_ing, max_ing)
 
-    # 2. Obtenemos los objetos completos (MapReduce manual)
+    # 2. Obtenemos los objetos completos
     for k in keys_found:
         d = get_object('poblacion', k)
         if d:
@@ -119,10 +116,10 @@ def buscar_por_ingresos(min_ing=0, max_ing=100000):
 def filtrar_por_sector_sexo(sector, sexo):
     print(f"\nPersonas del sector {sector} y sexo {sexo}:")
 
-    # 1. Filtro primario eficiente: Índice de Riak (Sector)
+    # 1. Filtro primario eficiente: Índice de Riak
     keys_sector = query_2i_exact('poblacion', 'sector_int', sector)
 
-    # 2. Filtro secundario: Application Side (Python)
+    # 2. Filtro secundario: Application Side
     for k in keys_sector:
         d = get_object('poblacion', k)
         if d and d['sexo'] == sexo:

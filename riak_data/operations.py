@@ -9,7 +9,6 @@ HEADERS = {'Content-Type': 'application/json'}
 
 def check_connection():
     try:
-        # El endpoint /ping devuelve "OK" si Riak está vivo
         response = requests.get(f"{RIAK_HOST}/ping")
         if response.status_code != 200:
             raise ConnectionError("No se recibió 200 OK del ping")
@@ -19,13 +18,10 @@ def check_connection():
         sys.exit(1)
 
 
-# --- FUNCIONES AUXILIARES (Para simular el cliente Riak) ---
+# --- FUNCIONES AUXILIARES () ---
 
 def get_keys(bucket):
-    """
-    Equivalente a bucket.get_keys().
-    OJO: En producción usar ?keys=stream, aquí usamos ?keys=true para simplificar.
-    """
+    """Equivalente a bucket.get_keys() """
     url = f"{RIAK_HOST}/buckets/{bucket}/keys?keys=true"
     resp = requests.get(url)
     if resp.status_code == 200:
@@ -39,7 +35,7 @@ def get_object(bucket, key):
     url = f"{RIAK_HOST}/buckets/{bucket}/keys/{key}"
     resp = requests.get(url)
     if resp.status_code == 200:
-        return resp.json()  # Devuelve el dict (JSON)
+        return resp.json()
     return None
 
 
@@ -54,7 +50,7 @@ def delete_object(bucket, key):
     """ Equivalente a bucket.delete(key) """
     url = f"{RIAK_HOST}/buckets/{bucket}/keys/{key}"
     resp = requests.delete(url)
-    return resp.status_code in [204, 404]  # 204 es borrado OK, 404 es que ya no estaba
+    return resp.status_code in [204, 404]
 
 
 # ------------------------------
@@ -73,8 +69,6 @@ keys_pob = get_keys('poblacion')
 
 print(f"Lista completa de población ({len(keys_pob)} registros):")
 for k in keys_pob:
-    # Obtenemos el objeto por su clave
-    # NOTA: Riak devuelve las claves como strings, aseguramos limpieza
     obj_data = get_object('poblacion', k)
     if obj_data:
         print(obj_data)
@@ -90,7 +84,6 @@ for k in keys_sec:
         sectores.append(obj_data)
 
 # --- Ordenar por codS ---
-# Esto se hace igual en Python
 sectores_ordenados = sorted(sectores, key=lambda x: x['codS'])
 
 print("Lista completa de sectores ordenada por codS:")
@@ -106,7 +99,6 @@ print(obj_consulta)
 # --- Leer un campo concreto ---
 print(f"Ingresos del DNI {dni_consulta}:")
 if obj_consulta:
-    # Equivalente a "$.ingresos"
     print(obj_consulta.get('ingresos'))
 
 # ------------------------------
@@ -153,8 +145,6 @@ if datos_actuales:
     # 3. Guardamos los datos modificados (PUT)
     if store_object('poblacion', dni_actualizar, datos_actuales):
         print(f"Registro {dni_actualizar} actualizado correctamente")
-
-        # Verificación visual (opcional)
         print("Dato actualizado:", get_object('poblacion', dni_actualizar))
 else:
     print(f"No se encontró el registro {dni_actualizar} para actualizar")
@@ -163,7 +153,6 @@ else:
 # BORRAR UN REGISTRO
 # ------------------------------
 dni_borrar = "555888999"
-# Se puede borrar directamente pasando la clave al bucket
 if delete_object('poblacion', dni_borrar):
     print(f"\nRegistro {dni_borrar} eliminado")
 else:

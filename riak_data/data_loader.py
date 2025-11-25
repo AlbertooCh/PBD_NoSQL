@@ -1,7 +1,6 @@
 import requests
 import json
 
-# --- CONFIGURACIÓN DE CONEXIÓN ---
 RIAK_HOST = 'http://localhost:8098'
 HEADERS = {'Content-Type': 'application/json'}
 
@@ -15,7 +14,6 @@ def guardar_en_riak(bucket, key, data):
     try:
         response = requests.put(url, data=json.dumps(data), headers=HEADERS)
 
-        # Riak suele devolver 200 o 204 (No Content) si va bien
         if response.status_code in [200, 204]:
             return True
         else:
@@ -26,7 +24,6 @@ def guardar_en_riak(bucket, key, data):
         return False
 
 
-# --- DATASETS COMPLETOS ---
 sectores = [
     {"codS": 1, "nombreS": "Agricultura y pesca", "porcentS": 0, "ingresosS": 0},
     {"codS": 2, "nombreS": "Industria y energía", "porcentS": 0, "ingresosS": 0},
@@ -36,7 +33,6 @@ sectores = [
 
 print("--- INSERTANDO SECTORES ---")
 for s in sectores:
-    # En Riak, usamos el bucket 'sectores' y la key directa (ej: 1)
     bucket = "sectores"
     key = str(s['codS'])
 
@@ -115,7 +111,6 @@ poblacion = [
 
 print("\n--- INSERTANDO POBLACIÓN ---")
 for p in poblacion:
-    # En Riak, usamos el bucket 'poblacion' y el DNI como key
     bucket = "poblacion"
     key = p['dni']
 
