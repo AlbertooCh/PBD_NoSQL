@@ -5,6 +5,14 @@ import requests
 import json
 import time
 import random
+# IMPORTAMOS EL DATASET EN LUGAR DE DEFINIRLO AQUÍ
+try:
+    from datasets.dataset import sectores, poblacion
+except ImportError:
+    # Fallback por si no existe el archivo aún, para que no falle la app entera
+    sectores = []
+    poblacion = []
+    print("⚠️ ADVERTENCIA: No se encontró 'dataset.py'. La carga de datos estará vacía.")
 
 app = FastAPI()
 
@@ -104,21 +112,28 @@ def load_data():
         tracer.log("Error conectando a Riak", "error")
         return {"trace": tracer.logs, "msg": "Error"}
 
-    # Dataset reducido para el ejemplo
-    sectores = [{"codS": 1, "nombreS": "Agricultura"}, {"codS": 2, "nombreS": "Industria"}]
-    poblacion = [
-        {"dni": "123456789", "nombre": "Carlos", "sexo": "H", "ingresos": 15000, "sector": 1},
-        {"dni": "555666777", "nombre": "Vicente", "sexo": "H", "ingresos": 46000, "sector": 2},
-        {"dni": "987654321", "nombre": "Eva", "sexo": "M", "ingresos": 40000, "sector": 2}
-    ]
+    tracer.log("Iniciando carga del dataset completo desde dataset.py...", "info")
 
-    for s in sectores: store_object_with_indexes("sectores", str(s['codS']), s)
+    if not sectores and not poblacion:
+        tracer.log("No hay datos cargados (listas vacías).", "warn")
+        return {"trace": tracer.logs, "msg": "No hay datos"}
+
+    # Cargar Sectores
+    for s in sectores:
+        store_object_with_indexes("sectores", str(s['codS']), s)
+
+    # Cargar Población con Índices
+    # Reutilizamos store_object_with_indexes para que los índices se creen correctamente
     for p in poblacion:
-        idxs = {'ingresos_int': p['ingresos'], 'sector_int': p['sector'], 'sexo_bin': p['sexo']}
+        idxs = {
+            'ingresos_int': p['ingresos'],
+            'sector_int': p['sector'],
+            'sexo_bin': p['sexo']
+        }
         store_object_with_indexes("poblacion", p['dni'], p, idxs)
 
-    tracer.log(f"Datos base cargados.", "success")
-    return {"trace": tracer.logs, "msg": "Datos cargados"}
+    tracer.log(f"Datos insertados: {len(poblacion)} personas y {len(sectores)} sectores.", "success")
+    return {"trace": tracer.logs, "msg": "Datos cargados exitosamente"}
 
 
 @app.get("/execute/{operation}/{db}")
@@ -246,49 +261,94 @@ def execute_operation(
     # OPERACIONES AVANZADAS EXISTENTES
     # ==========================================
     elif operation == "indexar":
-        # ... (Tu código existente para indexar) ...
         if db == "riak":
+            tracer.log("Obteniendo claves del bucket 'poblacion'...", "info")
             keys = get_keys('poblacion')
+            count = 0
             for k in keys:
-                d = get_object('poblacion', k)
-                if d:
-                    idxs = {'ingresos_int': d.get('ingresos', 0), 'sector_int': d.get('sector', 1),
-                            'sexo_bin': d.get('sexo', 'M')}
-                    store_object_with_indexes('poblacion', k, d, idxs)
-            tracer.log(f"Datos re-indexados.", "success")
-        pass  # (Simulaciones Mongo/Redis omitidas por brevedad, igual que antes)
+                data = get_object('poblacion', k)
+                if data:
+                    mis_indices = {
+                        'ingresos_int': data.get('ingresos', 0),
+                        'sector_int': data.get('sector', 1),
+                        'sexo_bin': data.get('sexo', 'M')
+                    }
+                    store_object_with_indexes('poblacion', k, data, mis_indices)
+                    count += 1
+            tracer.log(f"Datos re-indexados: {count} registros actualizados.", "success")
+
+        elif db == "mongo":
+            time.sleep(0.05)
+            tracer.log("db.poblacion.createIndex({ ingresos: 1 })", "warn")
+            tracer.log("db.poblacion.createIndex({ sector: 1 })", "warn")
+        elif db == "redis":
+            time.sleep(0.02)
+            tracer.log("FT.CREATE idx:poblacion ON HASH PREFIX 1 'poblacion:'...", "warn")
 
     elif operation == "rango":
-        # ... (Tu código existente para rango) ...
-        tracer.log(f"Rango {min_val}-{max_val}", "info")
+        tracer.log(f"Buscando ingresos entre {min_val} y {max_val}", "info")
+
         if db == "riak":
             keys = query_2i_range('poblacion', 'ingresos_int', min_val, max_val)
-            data = [get_object('poblacion', k) for k in keys]
+            tracer.log(f"Riak devolvió {len(keys)} claves por índice.", "info")
+            data = []
+            for k in keys:
+                obj = get_object('poblacion', k)
+                if obj: data.append(obj)
             result_data = data
+
         elif db == "mongo":
-            result_data = [{"simulado": True}]
+            time.sleep(random.uniform(0.02, 0.05))
+            tracer.log(f"db.poblacion.find({{ ingresos: {{ $gte: {min_val}, $lte: {max_val} }} }})", "warn")
+            result_data = [{"nombre": "Simulado Mongo", "ingresos": (min_val + max_val) // 2}]
+
         elif db == "redis":
-            result_data = [{"simulado": True}]
+            time.sleep(random.uniform(0.005, 0.015))
+            tracer.log(f"FT.SEARCH idx:poblacion '@ingresos:[{min_val} {max_val}]'", "warn")
+            result_data = [{"nombre": "Simulado Redis", "ingresos": (min_val + max_val) // 2}]
 
     elif operation == "filtro":
-        # ... (Tu código existente para filtro) ...
-        tracer.log(f"Sector {sector} y Sexo {sexo}", "info")
+        tracer.log(f"Filtro: Sector {sector} y Sexo {sexo}", "info")
+
         if db == "riak":
             keys = query_2i_exact('poblacion', 'sector_int', sector)
-            result_data = [d for k in keys if (d := get_object('poblacion', k)) and d['sexo'] == sexo]
+            tracer.log(f"Índice 'sector_int'={sector} devolvió {len(keys)} claves.", "info")
+            found = []
+            for k in keys:
+                d = get_object('poblacion', k)
+                if d and d['sexo'] == sexo:
+                    found.append(d)
+            result_data = found
+
         elif db == "mongo":
-            pass
+            time.sleep(random.uniform(0.02, 0.06))
+            tracer.log(f"db.poblacion.find({{ sector: {sector}, sexo: '{sexo}' }})", "warn")
+
         elif db == "redis":
-            pass
+            time.sleep(random.uniform(0.005, 0.015))
+            tracer.log(f"FT.SEARCH idx:poblacion '@sector:[{sector} {sector}] @sexo:{{{sexo}}}'", "warn")
 
     elif operation == "agregacion":
-        # ... (Tu código existente para agregación) ...
         if db == "riak":
             keys = get_keys('poblacion')
-            total = sum(
-                [d['ingresos'] for k in keys if (d := get_object('poblacion', k)) and str(d['sector']) == str(sector)])
+            total = 0
+            for k in keys:
+                obj = get_object('poblacion', k)
+                if obj and str(obj['sector']) == str(sector):
+                    total += obj.get('ingresos', 0)
+
+            resumen = {str(sector): total}
+            store_object_with_indexes('resumenes', 'resumen_sector', resumen)
+            tracer.log(f"Resumen guardado en bucket 'resumenes'.", "success")
             result_data = {"sector": sector, "total": total}
-        pass
+
+        elif db == "mongo":
+            time.sleep(random.uniform(0.03, 0.08))
+            tracer.log("Aggregation Pipeline ejecutado", "warn")
+
+        elif db == "redis":
+            time.sleep(random.uniform(0.01, 0.02))
+            tracer.log("FT.AGGREGATE ejecutado en memoria", "warn")
 
     exec_time = tracer.get_execution_time()
     tracer.log(f"Tiempo total: {exec_time} ms", "timer")
