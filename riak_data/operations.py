@@ -40,22 +40,16 @@ def get_object(bucket, key):
 
 
 def store_object(bucket, key, data):
-    """ Equivalente a object.store() """
     url = f"{RIAK_HOST}/buckets/{bucket}/keys/{key}"
     resp = requests.put(url, data=json.dumps(data), headers=HEADERS)
     return resp.status_code in [200, 204]
 
 
 def delete_object(bucket, key):
-    """ Equivalente a bucket.delete(key) """
     url = f"{RIAK_HOST}/buckets/{bucket}/keys/{key}"
     resp = requests.delete(url)
     return resp.status_code in [204, 404]
 
-
-# ------------------------------
-# INICIO DEL SCRIPT
-# ------------------------------
 
 check_connection()
 
@@ -120,7 +114,7 @@ nuevo_p = {
     "sector": 2
 }
 
-# Creamos un nuevo objeto en el bucket
+# Crear un nuevo objeto en el bucket
 new_key = nuevo_p['dni']
 if store_object('poblacion', new_key, nuevo_p):
     print(f"\nInsertado nuevo registro: {new_key}")
@@ -130,19 +124,15 @@ else:
 # ------------------------------
 # OPERACIONES DE ACTUALIZACIÓN
 # ------------------------------
-# Fetch -> Modify -> Store
 dni_actualizar = "555888999"
 print(f"\nIntentando actualizar {dni_actualizar}...")
 
-# 1. Obtenemos los datos actuales (GET)
 datos_actuales = get_object('poblacion', dni_actualizar)
 
 if datos_actuales:
-    # 2. Modificamos los campos (en memoria Python)
     datos_actuales['ingresos'] = 16000
     datos_actuales['direccion'] = "C. Actualizada"
 
-    # 3. Guardamos los datos modificados (PUT)
     if store_object('poblacion', dni_actualizar, datos_actuales):
         print(f"Registro {dni_actualizar} actualizado correctamente")
         print("Dato actualizado:", get_object('poblacion', dni_actualizar))

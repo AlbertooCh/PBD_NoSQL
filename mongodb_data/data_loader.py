@@ -21,24 +21,17 @@ def cargar_datos_prueba(m_client):
     if m_client:
         try:
             db = m_client['practica_db']
-            
-            # 1. Limpiamos las colecciones
+
             db.poblacion.delete_many({})
             db.sectores.delete_many({})
             db.logs_poblacion.delete_many({})
             db.resumen_sectores.delete_many({})
 
-            # Obtenemos la ruta donde está este script (mongodb_data)
             base_path = os.path.dirname(os.path.abspath(__file__))
-            
-            # --- CAMBIO AQUÍ ---
-            # Usamos '..' para subir un nivel (a PBD_NOSQL) y luego entramos a 'datasets'
+
             ruta_sectores = os.path.join(base_path, '..', 'datasets', 'sectores.json')
             ruta_poblacion = os.path.join(base_path, '..', 'datasets', 'poblacion.json')
-            # -------------------
 
-            # 2. Cargar SECTORES
-            # Verificamos si existe el archivo antes de abrirlo para evitar errores confusos
             if os.path.exists(ruta_sectores):
                 with open(ruta_sectores, 'r', encoding='utf-8') as f:
                     sectores_data = json.load(f)
@@ -48,7 +41,6 @@ def cargar_datos_prueba(m_client):
             else:
                 print(f"Error: No se encontró el archivo {ruta_sectores}")
 
-            # 3. Cargar POBLACION
             if os.path.exists(ruta_poblacion):
                 with open(ruta_poblacion, 'r', encoding='utf-8') as f:
                     poblacion_data = json.load(f)

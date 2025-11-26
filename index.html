@@ -3,147 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NoSQL Benchmark: Mongo vs Redis vs Riak</title>
+    <title>NoSQL Laboratorio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .code-block { font-family: 'Fira Code', monospace; font-size: 0.85rem; }
+        .code-block { font-family: 'Fira Code', monospace; }
         .fade-in { animation: fadeIn 0.4s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .progress-bar { transition: width 1s ease-out; }
+
+        .custom-table th { background-color: #1e293b; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; padding: 12px; text-align: left; position: sticky; top: 0; z-index: 10; }
+        .custom-table td { padding: 12px; border-bottom: 1px solid #1e293b; color: #cbd5e1; font-size: 0.875rem; }
+        .custom-table tr:hover { background-color: #334155; }
+
+        .bench-bar { transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-200 h-screen flex overflow-hidden">
 
-    <!-- MENÚ LATERAL -->
     <aside class="w-64 bg-black border-r border-slate-800 flex flex-col z-20">
         <div class="p-6 border-b border-slate-900 flex items-center gap-2">
-            <div class="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"></div>
             <h1 class="font-bold text-lg tracking-wider text-white">NoSQL <span class="text-blue-500">LAB</span></h1>
         </div>
-
         <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
             <div class="text-xs font-bold text-slate-600 uppercase tracking-widest mb-2 px-2">General</div>
-            <button onclick="showSection('welcome')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white">
-                🏠 <span>Inicio</span>
-            </button>
-            <button onclick="loadData()" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white hover:text-green-400">
-                💾 <span>Cargar Datos</span>
-            </button>
-            <button onclick="showSection('benchmark')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white hover:text-yellow-400 border border-transparent hover:border-yellow-900">
-                🚀 <span>Comparativa</span>
+            <button onclick="showSection('welcome')" class="menu-btn w-full text-left px-4 py-2 rounded hover:bg-slate-900 text-slate-400 mb-1">🏠 Inicio</button>
+            <button onclick="showSection('benchmark')" class="menu-btn w-full text-left px-4 py-2 rounded hover:bg-slate-900 text-yellow-500 font-bold mb-4 border border-yellow-900/30">🚀 Comparativa</button>
+
+            <button onclick="loadData()" class="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-green-400 font-bold border border-green-900/30 mb-4">
+                💾 <span>RECARGAR DATOS</span>
             </button>
 
-            <div class="mt-6 text-xs font-bold text-slate-600 uppercase tracking-widest mb-2 px-2">CRUD Básico</div>
-            <button onclick="loadOperation('listar')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white">
-                📜 <span>Listar Todo</span>
-            </button>
-            <button onclick="loadOperation('leer')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white">
-                👁️ <span>Leer (Por ID)</span>
-            </button>
-            <button onclick="loadOperation('insertar')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white">
-                ➕ <span>Insertar Nuevo</span>
-            </button>
-            <button onclick="loadOperation('actualizar')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white">
-                ✏️ <span>Actualizar</span>
-            </button>
-            <button onclick="loadOperation('borrar')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white hover:text-red-400">
-                🗑️ <span>Borrar</span>
-            </button>
+            <div class="text-xs font-bold text-slate-600 uppercase tracking-widest mb-2 px-2">Operaciones</div>
+            <button onclick="loadOperation('listar')" class="menu-btn w-full text-left px-4 py-2 rounded hover:bg-slate-900 text-slate-400">📜 Listar Todo</button>
+            <button onclick="loadOperation('leer')" class="menu-btn w-full text-left px-4 py-2 rounded hover:bg-slate-900 text-slate-400">👁️ Leer ID</button>
+            <button onclick="loadOperation('insertar')" class="menu-btn w-full text-left px-4 py-2 rounded hover:bg-slate-900 text-slate-400">➕ Insertar</button>
+            <button onclick="loadOperation('actualizar')" class="menu-btn w-full text-left px-4 py-2 rounded hover:bg-slate-900 text-slate-400">✏️ Actualizar</button>
+            <button onclick="loadOperation('borrar')" class="menu-btn w-full text-left px-4 py-2 rounded hover:bg-slate-900 text-slate-400 text-red-400">🗑️ Borrar</button>
 
-            <div class="mt-6 text-xs font-bold text-slate-600 uppercase tracking-widest mb-2 px-2">Consultas Avanzadas</div>
-            <button onclick="loadOperation('indexar')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white">
-                🏷️ <span>Indexar (Optimización)</span>
-            </button>
-            <button onclick="loadOperation('rango')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white">
-                🔍 <span>Búsqueda Rango</span>
-            </button>
-            <button onclick="loadOperation('filtro')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white">
-                ⚡ <span>Filtro Complejo</span>
-            </button>
-            <button onclick="loadOperation('agregacion')" class="menu-btn w-full text-left px-4 py-3 rounded-lg hover:bg-slate-900 transition flex items-center gap-3 text-slate-400 hover:text-white">
-                📊 <span>Agregación</span>
-            </button>
+            <div class="text-xs font-bold text-slate-600 uppercase tracking-widest mt-4 mb-2 px-2">Avanzado</div>
+            <button onclick="loadOperation('rango')" class="menu-btn w-full text-left px-4 py-2 rounded hover:bg-slate-900 text-slate-400">🔍 Rango Ingresos</button>
+            <button onclick="loadOperation('filtro')" class="menu-btn w-full text-left px-4 py-2 rounded hover:bg-slate-900 text-slate-400">⚡ Filtro Sector/Sexo</button>
+            <button onclick="loadOperation('indexar')" class="menu-btn w-full text-left px-4 py-2 rounded hover:bg-slate-900 text-slate-400 hover:text-yellow-400">🏷️ Re-Indexar</button>
+            <button onclick="loadOperation('agregacion')" class="menu-btn w-full text-left px-4 py-2 rounded hover:bg-slate-900 text-slate-400">📊 Agregación</button>
         </nav>
     </aside>
 
-    <!-- CONTENIDO PRINCIPAL -->
     <main class="flex-1 flex flex-col relative overflow-hidden bg-slate-900">
-        
-        <!-- BIENVENIDA -->
-        <div id="welcome-view" class="absolute inset-0 flex flex-col items-center justify-center text-center p-10 fade-in z-10">
+
+        <div id="welcome-view" class="absolute inset-0 flex flex-col items-center justify-center text-center p-10 fade-in z-30 bg-slate-900">
             <div class="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent text-7xl font-extrabold mb-6">
-                NoSQL Operations
+                NoSQL Laboratorio
             </div>
-            <p class="text-xl text-slate-400 max-w-2xl mb-10">
-                Plataforma interactiva para MongoDB, Redis Stack y Riak KV.
+            <p class="text-xl text-slate-400 max-w-2xl mb-10 leading-relaxed">
+                Laboratorio interactivo. Comparativa de bases de datos NoSQL: MongoDB, Redis y Riak en tiempo real.
             </p>
             <div class="grid grid-cols-3 gap-6 w-full max-w-4xl">
-                <div class="p-6 bg-slate-800/50 rounded-xl border border-slate-800"><h3 class="text-green-400 font-bold">MongoDB</h3><p class="text-xs text-slate-500">Documental</p></div>
-                <div class="p-6 bg-slate-800/50 rounded-xl border border-slate-800"><h3 class="text-red-400 font-bold">Redis</h3><p class="text-xs text-slate-500">JSON + RediSearch</p></div>
-                <div class="p-6 bg-slate-800/50 rounded-xl border border-slate-800"><h3 class="text-orange-400 font-bold">Riak</h3><p class="text-xs text-slate-500">Key-Value + 2i</p></div>
-            </div>
-        </div>
-
-        <!-- BENCHMARK -->
-        <div id="benchmark-view" class="hidden absolute inset-0 flex flex-col p-8 fade-in z-10 bg-slate-900">
-            <h2 class="text-3xl font-bold text-white mb-6">🚀 Test de Rendimiento</h2>
-            <div class="bg-slate-800 rounded-xl p-6 mb-6">
-                <div class="flex gap-4">
-                    <button onclick="runBenchmark('insertar')" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold transition">Insertar</button>
-                    <button onclick="runBenchmark('leer')" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold transition">Lectura ID</button>
-                    <button onclick="runBenchmark('rango')" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold transition">Rango</button>
+                <div class="p-8 bg-slate-800/50 rounded-xl border border-slate-800 hover:border-green-500 transition">
+                    <h3 class="text-green-400 font-bold text-2xl mb-2">MongoDB</h3>
+                    <p class="text-sm text-slate-500">Documental BSON</p>
+                </div>
+                <div class="p-8 bg-slate-800/50 rounded-xl border border-slate-800 hover:border-red-500 transition">
+                    <h3 class="text-red-400 font-bold text-2xl mb-2">Redis</h3>
+                    <p class="text-sm text-slate-500">Key-Value</p>
+                </div>
+                <div class="p-8 bg-slate-800/50 rounded-xl border border-slate-800 hover:border-orange-500 transition">
+                    <h3 class="text-orange-400 font-bold text-2xl mb-2">Riak</h3>
+                    <p class="text-sm text-slate-500">Key-Value Distribuido</p>
                 </div>
             </div>
-            <div class="flex-1 space-y-6">
-                <div class="relative"><div class="flex justify-between text-sm mb-1"><span class="font-bold text-red-400">REDIS</span><span id="bench-time-redis" class="text-slate-400">0 ms</span></div><div class="h-8 bg-slate-800 rounded-full overflow-hidden"><div id="bench-bar-redis" class="h-full bg-red-500 progress-bar w-0"></div></div></div>
-                <div class="relative"><div class="flex justify-between text-sm mb-1"><span class="font-bold text-green-400">MONGO</span><span id="bench-time-mongo" class="text-slate-400">0 ms</span></div><div class="h-8 bg-slate-800 rounded-full overflow-hidden"><div id="bench-bar-mongo" class="h-full bg-green-500 progress-bar w-0"></div></div></div>
-                <div class="relative"><div class="flex justify-between text-sm mb-1"><span class="font-bold text-orange-400">RIAK</span><span id="bench-time-riak" class="text-slate-400">0 ms</span></div><div class="h-8 bg-slate-800 rounded-full overflow-hidden"><div id="bench-bar-riak" class="h-full bg-orange-500 progress-bar w-0"></div></div></div>
-            </div>
         </div>
 
-        <!-- VISTA OPERACIONES -->
-        <div id="operation-view" class="hidden flex-1 flex flex-col h-full">
-            <header class="bg-slate-950 border-b border-slate-800 p-6 flex justify-between items-center">
+        <div id="benchmark-view" class="hidden absolute inset-0 flex flex-col p-8 fade-in z-30 bg-slate-900 overflow-y-auto">
+            <h2 class="text-3xl font-bold text-white mb-2">🚀 Comparativa de Rendimiento</h2>
+            <p class="text-slate-400 mb-8">Ejecuta operaciones con parámetros fijos en las 3 bases de datos.</p>
+
+            <div class="grid grid-cols-4 gap-4 mb-10">
+                <button onclick="runBenchmark('leer')" class="p-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition group">
+                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Lectura Simple</div>
+                    <div class="text-white font-bold group-hover:text-blue-400">Test: ID 123456789</div>
+                </button>
+                <button onclick="runBenchmark('insertar')" class="p-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition group">
+                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Escritura</div>
+                    <div class="text-white font-bold group-hover:text-blue-400">Test: ID 555888999</div>
+                </button>
+                <button onclick="runBenchmark('rango')" class="p-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition group">
+                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Consulta Compleja</div>
+                    <div class="text-white font-bold group-hover:text-blue-400">Test: 20k - 50k €</div>
+                </button>
+                <button onclick="runBenchmark('agregacion')" class="p-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition group">
+                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Analítica</div>
+                    <div class="text-white font-bold group-hover:text-blue-400">Test: Suma Sector 2</div>
+                </button>
+            </div>
+
+            <div class="bg-black rounded-xl border border-slate-800 p-8 max-w-4xl w-full mx-auto">
+                <h3 id="bench-title" class="text-xl font-bold text-white mb-6 border-b border-slate-800 pb-2">Resultados (ms)</h3>
+
+                <div class="mb-6">
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="font-bold text-red-400 flex items-center gap-2">🔴 REDIS</span>
+                        <span id="bench-res-redis" class="text-white font-mono font-bold">0 ms</span>
+                    </div>
+                    <div class="h-4 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                        <div id="bench-bar-redis" class="h-full bg-red-600 bench-bar shadow-[0_0_10px_rgba(220,38,38,0.5)]" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="font-bold text-green-400 flex items-center gap-2">🟢 MONGODB</span>
+                        <span id="bench-res-mongo" class="text-white font-mono font-bold">0 ms</span>
+                    </div>
+                    <div class="h-4 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                        <div id="bench-bar-mongo" class="h-full bg-green-500 bench-bar shadow-[0_0_10px_rgba(34,197,94,0.5)]" style="width: 0%"></div>
+                    </div>
+                </div>
+
                 <div>
-                    <h2 id="op-title" class="text-2xl font-bold text-white">Operación</h2>
-                    <p id="op-subtitle" class="text-slate-400 text-sm">Descripción...</p>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="font-bold text-orange-400 flex items-center gap-2">🟠 RIAK</span>
+                        <span id="bench-res-riak" class="text-white font-mono font-bold">0 ms</span>
+                    </div>
+                    <div class="h-4 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                        <div id="bench-bar-riak" class="h-full bg-orange-500 bench-bar shadow-[0_0_10px_rgba(249,115,22,0.5)]" style="width: 0%"></div>
+                    </div>
                 </div>
+
+                <div id="bench-winner" class="mt-8 text-center text-sm font-bold text-slate-500 italic h-6"></div>
+            </div>
+        </div>
+
+        <div id="operation-view" class="hidden flex-1 flex flex-col h-full fade-in">
+            <header class="bg-slate-950 border-b border-slate-800 p-4 flex justify-between items-center h-16 shadow-md z-10">
+                <div><h2 id="op-title" class="text-xl font-bold text-white tracking-wide">OPERACIÓN</h2></div>
                 <div class="flex bg-slate-900 p-1 rounded-lg border border-slate-800">
-                    <button onclick="selectDB('mongo')" id="tab-mongo" class="tab-btn px-4 py-2 rounded-md text-sm font-bold text-slate-400 transition">MongoDB</button>
-                    <button onclick="selectDB('redis')" id="tab-redis" class="tab-btn px-4 py-2 rounded-md text-sm font-bold text-slate-400 transition">Redis</button>
-                    <button onclick="selectDB('riak')" id="tab-riak" class="tab-btn px-4 py-2 rounded-md text-sm font-bold text-slate-400 transition">Riak</button>
+                    <button onclick="selectDB('mongo')" id="tab-mongo" class="tab-btn px-6 py-1 rounded text-sm font-bold text-slate-400 transition hover:text-white">MongoDB</button>
+                    <button onclick="selectDB('redis')" id="tab-redis" class="tab-btn px-6 py-1 rounded text-sm font-bold text-slate-400 transition hover:text-white">Redis</button>
+                    <button onclick="selectDB('riak')" id="tab-riak" class="tab-btn px-6 py-1 rounded text-sm font-bold text-slate-400 transition hover:text-white">Riak</button>
                 </div>
             </header>
 
             <div class="flex-1 flex overflow-hidden">
-                <div class="w-1/2 flex flex-col border-r border-slate-800 bg-slate-900">
-                    <div class="p-6 border-b border-slate-800 bg-slate-800/30">
-                        <h3 class="text-blue-400 font-bold uppercase text-xs tracking-widest mb-3">🛠️ Parámetros</h3>
-                        <div id="input-container" class="grid grid-cols-2 gap-4"></div>
-                    </div>
-                    <div class="flex-1 p-6 overflow-y-auto">
-                        <h3 class="text-slate-500 font-bold uppercase text-xs tracking-widest mb-2">Código (Python Driver):</h3>
-                        <p id="op-explanation" class="text-slate-300 mb-4 text-sm leading-relaxed"></p>
-                        <div class="relative group">
-                            <pre><code id="op-code" class="language-python rounded-lg bg-black p-4 text-sm border border-slate-700 shadow-inner"></code></pre>
+                <div class="w-1/3 flex flex-col border-r border-slate-800 bg-slate-900">
+                    <div class="p-5 border-b border-slate-800 bg-slate-800/30">
+                        <h3 class="text-blue-400 font-bold uppercase text-xs tracking-widest mb-4">🛠️ Parámetros</h3>
+                        <div id="input-container" class="grid grid-cols-1 gap-4 mb-6"></div>
+
+                        <h3 class="text-purple-400 font-bold uppercase text-xs tracking-widest mb-2">💻 Query Ejecutada</h3>
+                        <div class="bg-black border border-slate-700 rounded p-3 mb-4 overflow-x-auto">
+                            <pre><code id="query-code" class="text-xs font-mono text-purple-300">Esperando ejecución...</code></pre>
                         </div>
-                        <button onclick="runExecution()" id="btn-run" class="mt-6 w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg transition transform active:scale-[0.98] flex justify-center gap-2">
-                            <span>▶️</span> Ejecutar en <span id="btn-db-name">...</span>
+
+                        <button onclick="runExecution()" id="btn-run" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded shadow-lg transition transform active:scale-[0.98]">
+                            ▶ EJECUTAR
                         </button>
                     </div>
-                </div>
-                <div class="w-1/2 bg-black flex flex-col font-mono text-sm">
-                    <div class="bg-slate-900 text-slate-400 px-4 py-2 text-xs border-b border-slate-800 flex justify-between">
-                        <span>TERMINAL</span>
-                        <span id="exec-time" class="text-yellow-500"></span>
+                    <div class="flex-1 p-5 overflow-y-auto bg-black font-mono text-sm leading-relaxed border-t border-slate-800">
+                        <div class="flex justify-between border-b border-slate-800 pb-2 mb-3">
+                            <span class="text-slate-500 font-bold text-xs tracking-widest">TERMINAL</span>
+                            <span id="exec-time" class="text-yellow-500 font-bold">0 ms</span>
+                        </div>
+                        <div id="console-output" class="space-y-2 text-green-400 font-medium"></div>
                     </div>
-                    <div id="console-output" class="flex-1 p-4 overflow-y-auto space-y-1 text-green-400 font-light"></div>
-                    <div class="h-1/3 border-t border-slate-800 bg-slate-900/50 flex flex-col">
-                        <div class="bg-slate-900 text-slate-400 px-4 py-1 text-xs border-b border-slate-800">JSON RAW</div>
-                        <div id="json-output" class="flex-1 p-4 overflow-auto text-blue-300 text-xs whitespace-pre">{}</div>
+                </div>
+
+                <div class="w-2/3 bg-slate-900 flex flex-col relative">
+                    <div class="flex border-b border-slate-800 bg-slate-950 px-4 z-10 shadow-sm">
+                        <button onclick="switchResultView('table')" id="view-btn-table" class="view-btn py-3 px-6 text-sm font-bold border-b-2 border-blue-500 text-white transition-colors">📅 Tabla</button>
+                        <button onclick="switchResultView('json')" id="view-btn-json" class="view-btn py-3 px-6 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-white transition-colors">{} JSON Raw</button>
+                    </div>
+                    <div class="flex-1 overflow-auto p-0 relative bg-slate-900/50">
+                        <div id="result-table-container" class="p-0 w-full h-full absolute inset-0 overflow-auto">
+                            <table class="w-full custom-table text-left border-collapse">
+                                <thead id="table-head"></thead>
+                                <tbody id="table-body"></tbody>
+                            </table>
+                            <div id="table-empty" class="hidden flex flex-col items-center justify-center h-full text-slate-500">
+                                <div class="text-4xl mb-2">∅</div>
+                                <div>Sin resultados</div>
+                            </div>
+                        </div>
+                        <div id="result-json-container" class="hidden p-4 w-full h-full absolute inset-0 overflow-auto bg-[#1e1e1e]">
+                            <pre><code id="json-output" class="language-json text-sm font-mono"></code></pre>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -152,257 +200,200 @@
 
     <script>
         const API_URL = "http://localhost:8000";
-        let currentOp = null;
+        let currentOp = 'listar';
         let currentDB = 'mongo';
-        
-        const KNOWLEDGE = {
-            // --- CRUD BÁSICO ---
-            listar: {
-                title: "Listar Todo",
-                subtitle: "Obtener todas las claves/documentos.",
-                inputs: [],
-                mongo: { desc: "Scan completo.", code: `cursor = db.poblacion.find({}).limit(5)\nfor doc in cursor:\n  print(doc)` },
-                redis: { 
-                    desc: "Obtener todas las claves y luego sus valores JSON.", 
-                    code: `keysPob = r.keys("poblacion:*")\nfor k in keysPob:\n  registro = r.json().get(k)\n  print(registro)`
-                },
-                riak: { desc: "Obtener keys + get.", code: `keys = bucket.get_keys()\nfor k in keys: get(k)` }
-            },
-            leer: {
-                title: "Leer por ID",
-                subtitle: "Recuperar objeto por su clave.",
-                inputs: [{id: 'dni', label: 'DNI', type: 'text', val: '555888999'}],
-                mongo: { desc: "Find one.", code: `doc = db.poblacion.find_one({"_id": "{{dni}}"})\nprint(doc)` },
-                redis: { desc: "JSON.GET directo.", code: `r.json().get("poblacion:{{dni}}")` },
-                riak: { desc: "Get directo.", code: `bucket.get('{{dni}}')` }
-            },
-            insertar: {
-                title: "Insertar (Pub/Sub)",
-                subtitle: "Insertar JSON y notificar evento.",
-                inputs: [{id: 'dni', label: 'DNI', type: 'text', val: '555888999'}, {id: 'nombre', label: 'Nombre', type: 'text', val: 'Laura'}, {id: 'ingresos', label: 'Ingresos', type: 'number', val: 30000}],
-                mongo: { 
-                    desc: "Insert One (Trigger automático en Atlas).", 
-                    code: `try:\n  db.poblacion.insert_one(p)\n  print(f"Insertado {p['_id']}")\nexcept DuplicateKeyError:\n  print("Duplicado")` 
-                },
-                redis: { 
-                    desc: "Guardar JSON y publicar mensaje al canal 'nueva_persona'.", 
-                    code: `p = { "dni": "{{dni}}", "nombre": "{{nombre}}" ... }\n# 1. Guardar\nr.json().set(f"poblacion:{p['dni']}", Path.root_path(), p)\n# 2. Notificar\nr.publish("nueva_persona", f"Se ha unido {p['nombre']}")`
-                },
-                riak: { 
-                    desc: "Insertar objeto y enviar metadatos de índices secundarios (2i) en headers.", 
-                    code: `indices = {'ingresos_int': {{ingresos}}...}\nstore_object_with_indexes('poblacion', '{{dni}}', data, indices)` 
-                }
-            },
-            actualizar: {
-                title: "Actualizar (Parcial)",
-                subtitle: "Modificar un campo específico del JSON.",
-                inputs: [{id: 'dni', label: 'DNI', type: 'text', val: '555888999'}],
-                mongo: { desc: "Update One ($set).", code: `db.poblacion.update_one(\n  {"_id": "{{dni}}"},\n  {"$set": {"ingresos": ...}}\n)` },
-                redis: { 
-                    desc: "JSON.SET en un path específico ($.ingresos).", 
-                    code: `r.json().set("poblacion:{{dni}}", "$.ingresos", 16000)\nr.json().set("poblacion:{{dni}}", "$.direccion", "C. Actualizada")`
-                },
-                riak: { desc: "Fetch -> Modify -> Store.", code: `obj = get(); obj.ingresos=...; put(obj)` }
-            },
-            borrar: {
-                title: "Borrar",
-                subtitle: "Eliminar clave.",
-                inputs: [{id: 'dni', label: 'DNI', type: 'text', val: '555888999'}],
-                mongo: { desc: "Delete one.", code: `db.poblacion.delete_one({"_id": "{{dni}}"})` },
-                redis: { desc: "Borrado simple.", code: `r.delete("poblacion:{{dni}}")` },
-                riak: { desc: "Delete.", code: `delete(...)` }
-            },
-            // --- AVANZADO ---
-            indexar: {
-                title: "Crear Índice",
-                subtitle: "Optimización de consultas.",
-                inputs: [],
-                mongo: { 
-                    desc: "Índices B-Tree simples y compuestos.", 
-                    code: `db.poblacion.create_index([("ingresos", ASCENDING)])\n# Indice compuesto\ndb.poblacion.create_index([("sector", ASCENDING), ("sexo", ASCENDING)])` 
-                },
-                redis: { 
-                    desc: "Crear índice sobre campos JSON (FT.CREATE).", 
-                    code: `schema = (\n  TextField("$.nombre", as_name="nombre"),\n  NumericField("$.ingresos", as_name="ingresos"),\n  ...\n)\nr.ft("idx_poblacion").create_index(\n  schema,\n  definition=IndexDefinition(prefix=["poblacion:"], index_type=IndexType.JSON)\n)`
-                },
-                riak: { 
-                    desc: "Recorrer claves existentes y re-guardar con headers 2i.", 
-                    code: `keys = get_keys('poblacion')\nfor k in keys:\n  data = get_object('poblacion', k)\n  idxs = {'ingresos_int': data['ingresos']...}\n  store_object_with_indexes('poblacion', k, data, idxs)` 
-                }
-            },
-            rango: {
-                title: "Búsqueda Rango",
-                subtitle: "Operadores de comparación.",
-                inputs: [{id: 'min_val', label: 'Min', type: 'number', val: 20000}, {id: 'max_val', label: 'Max', type: 'number', val: 50000}],
-                mongo: { 
-                    desc: "Operadores $gte y $lte con proyección.", 
-                    code: `query = {"ingresos": {"$gte": {{min_val}}, "$lte": {{max_val}}}}\nprojection = {"_id": 1, "nombre": 1, ...}\nres = db.poblacion.find(query, projection)` 
-                },
-                redis: { 
-                    desc: "Query con sintaxis @campo:[min max].", 
-                    code: `q = Query("@ingresos:[{{min_val}} {{max_val}}]").paging(0, 100)\nres = r.ft("idx_poblacion").search(q)\nfor doc in res.docs: ...`
-                },
-                riak: { 
-                    desc: "Query directa al índice 'ingresos_int' para obtener claves.", 
-                    code: `keys_found = query_2i_range('poblacion', 'ingresos_int', {{min_val}}, {{max_val}})\nfor k in keys_found:\n  d = get_object('poblacion', k)\n  print(d)` 
-                }
-            },
-            filtro: {
-                title: "Filtro Complejo",
-                subtitle: "Sector AND Sexo.",
-                inputs: [{id: 'sector', label: 'Sector', type: 'number', val: 2}, {id: 'sexo', label: 'Sexo', type: 'select', val: 'M', opts:['H','M']}],
-                mongo: { 
-                    desc: "Búsqueda exacta (usa índice compuesto).", 
-                    code: `query = {"sector": {{sector}}, "sexo": "{{sexo}}"}\nres = db.poblacion.find(query)` 
-                },
-                redis: { 
-                    desc: "Intersección de filtros en la Query string.", 
-                    code: `q = Query("@sector:[{{sector}} {{sector}}] @sexo:{{sexo}}")\nres = r.ft("idx_poblacion").search(q)`
-                },
-                riak: { 
-                    desc: "Filtro Primario (Sector) en DB + Filtro Secundario (Sexo) en App.", 
-                    code: `# 1. Filtro índice Riak\nkeys = query_2i_exact('poblacion', 'sector_int', {{sector}})\n# 2. Filtro App Side\nfor k in keys:\n  d = get_object('poblacion', k)\n  if d['sexo'] == '{{sexo}}': print(d)` 
-                }
-            },
-            agregacion: {
-                title: "Agregación",
-                subtitle: "Suma de ingresos por sector.",
-                inputs: [{id: 'sector', label: 'Sector', type: 'number', val: 2}],
-                mongo: { 
-                    desc: "Pipeline con persistencia ($out/insert).", 
-                    code: `pipeline = [\n  {"$group": {\n    "_id": "$sector",\n    "totalIngresos": {"$sum": "$ingresos"}\n  }},\n  {"$sort": {"_id": 1}}\n]\nres = db.poblacion.aggregate(pipeline)\ndb.resumen_sector.insert_many(res)` 
-                },
-                redis: { 
-                    desc: "Iterar claves y guardar resumen en un Hash separado.", 
-                    code: `keys = r.keys("poblacion:*")\nresumen = {}\nfor k in keys:\n  p = r.json().get(k)\n  s = p.get('sector')\n  resumen[s] += p.get('ingresos')\n\n# Guardar resultado\nr.hset("resumen_sector", str(s), total)`
-                },
-                riak: { 
-                    desc: "MapReduce Manual (Cliente descarga y suma).", 
-                    code: `keys = get_keys('poblacion')\nresumen = {}\nfor k in keys:\n  p = get_object('poblacion', k)\n  s = str(p['sector'])\n  resumen[s] += p['ingresos']\nstore_object_with_indexes('resumenes', 'resumen_sector', resumen)` 
-                }
-            }
+
+        const INPUTS = {
+            listar: [],
+            leer: [{id:'dni', label:'DNI', val:'555888999'}],
+            insertar: [{id:'dni',label:'DNI',val:'555888999'}, {id:'nombre',label:'Nombre',val:'TestUser'}, {id:'ingresos',label:'Ingresos',val:25000}, {id:'sector',label:'Sector',val:3}, {id:'sexo',label:'Sexo',val:'M'}],
+            actualizar: [{id:'dni', label:'DNI', val:'555888999'}, {id:'ingresos', label:'Nuevos Ingresos', val:45000}],
+            borrar: [{id:'dni', label:'DNI', val:'555888999'}],
+            rango: [{id:'min_val', label:'Min €', val:20000}, {id:'max_val', label:'Max €', val:50000}],
+            filtro: [{id:'sector', label:'Sector', val:2}, {id:'sexo', label:'Sexo', val:'M'}],
+            agregacion: [{id:'sector', label:'Sector', val:2}],
+            indexar: []
         };
 
-        function showSection(id) {
-            ['welcome-view', 'benchmark-view', 'operation-view'].forEach(v => document.getElementById(v).classList.add('hidden'));
-            document.getElementById(id + '-view').classList.remove('hidden');
-        }
-
-        async function loadData() {
-            if(!confirm("Se borrarán y recargarán datos. ¿Seguro?")) return;
-            const res = await fetch(`${API_URL}/load-data`);
-            alert((await res.json()).msg);
+        function showSection(section) {
+            ['welcome-view', 'operation-view', 'benchmark-view'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(section + '-view').classList.remove('hidden');
         }
 
         function loadOperation(op) {
-            currentOp = op;
             showSection('operation');
-            const info = KNOWLEDGE[op];
-            document.getElementById('op-title').innerText = info.title;
-            document.getElementById('op-subtitle').innerText = info.subtitle;
-            renderInputs(info.inputs);
-            selectDB(currentDB);
+            currentOp = op;
+            document.getElementById('op-title').innerText = op.toUpperCase();
+            renderInputs(INPUTS[op] || []);
         }
 
         function renderInputs(inputs) {
             const container = document.getElementById('input-container');
             container.innerHTML = '';
-            if(!inputs.length) container.innerHTML = '<div class="text-xs text-slate-500 italic">Sin parámetros</div>';
+            if(!inputs.length) container.innerHTML = '<div class="text-xs text-slate-600 italic text-center py-4">Sin parámetros necesarios</div>';
             inputs.forEach(inp => {
-                const div = document.createElement('div');
-                div.className = "flex flex-col";
-                const label = document.createElement('label');
-                label.className = "text-xs text-slate-400 mb-1 font-bold";
-                label.innerText = inp.label;
-                let field;
-                if(inp.type === 'select') {
-                    field = document.createElement('select');
-                    inp.opts.forEach(o => {
-                        const opt = document.createElement('option');
-                        opt.value = o; opt.innerText = o;
-                        if(o === inp.val) opt.selected = true;
-                        field.appendChild(opt);
-                    });
-                } else {
-                    field = document.createElement('input');
-                    field.type = inp.type; field.value = inp.val;
-                }
-                field.id = `input-${inp.id}`;
-                field.className = "bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white focus:border-blue-500 outline-none";
-                field.addEventListener('input', updateCodeView);
-                field.addEventListener('change', updateCodeView);
-                div.appendChild(label); div.appendChild(field); container.appendChild(div);
+                container.innerHTML += `
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1 ml-1">${inp.label}</label>
+                        <input id="input-${inp.id}" value="${inp.val}" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all">
+                    </div>`;
             });
-        }
-
-        function getParamValues() {
-            if(!currentOp || !KNOWLEDGE[currentOp].inputs) return {};
-            const vals = {};
-            KNOWLEDGE[currentOp].inputs.forEach(inp => vals[inp.id] = document.getElementById(`input-${inp.id}`).value);
-            return vals;
-        }
-
-        function updateCodeView() {
-            const info = KNOWLEDGE[currentOp][currentDB];
-            let code = info.code;
-            const params = getParamValues();
-            for (const [key, val] of Object.entries(params)) code = code.replaceAll(`{{${key}}}`, val);
-            document.getElementById('op-explanation').innerText = info.desc;
-            const codeEl = document.getElementById('op-code');
-            codeEl.textContent = code;
-            hljs.highlightElement(codeEl);
         }
 
         function selectDB(db) {
             currentDB = db;
-            document.querySelectorAll('.tab-btn').forEach(b => b.id === `tab-${db}` ? b.classList.add('bg-blue-600', 'text-white') : b.classList.remove('bg-blue-600', 'text-white'));
-            document.getElementById('btn-db-name').innerText = db.toUpperCase();
-            updateCodeView();
-            document.getElementById('console-output').innerHTML = '';
-            document.getElementById('json-output').innerText = '{}';
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                const isActive = b.id === `tab-${db}`;
+                b.classList.toggle('bg-blue-600', isActive);
+                b.classList.toggle('text-white', isActive);
+                b.classList.toggle('text-slate-400', !isActive);
+            });
+        }
+
+        function switchResultView(view) {
+            document.getElementById('result-table-container').classList.toggle('hidden', view !== 'table');
+            document.getElementById('result-json-container').classList.toggle('hidden', view !== 'json');
+
+            const btnTable = document.getElementById('view-btn-table');
+            const btnJson = document.getElementById('view-btn-json');
+
+            if(view === 'table') {
+                btnTable.classList.add('border-blue-500', 'text-white');
+                btnTable.classList.remove('border-transparent', 'text-slate-500');
+                btnJson.classList.remove('border-blue-500', 'text-white');
+                btnJson.classList.add('border-transparent', 'text-slate-500');
+            } else {
+                btnJson.classList.add('border-blue-500', 'text-white');
+                btnJson.classList.remove('border-transparent', 'text-slate-500');
+                btnTable.classList.remove('border-blue-500', 'text-white');
+                btnTable.classList.add('border-transparent', 'text-slate-500');
+            }
+        }
+
+        async function loadData() {
+            if(!confirm("ATENCIÓN: Se reiniciarán las 3 bases de datos. ¿Continuar?")) return;
+            const res = await fetch(`${API_URL}/load-data`);
+            alert((await res.json()).msg);
+        }
+
+        function renderTable(data) {
+            const thead = document.getElementById('table-head');
+            const tbody = document.getElementById('table-body');
+            const emptyMsg = document.getElementById('table-empty');
+
+            thead.innerHTML = ''; tbody.innerHTML = '';
+
+            let arr = Array.isArray(data) ? data : [data];
+            arr = arr.filter(item => item !== null && item !== undefined && Object.keys(item).length > 0);
+
+            if (arr.length === 0) {
+                emptyMsg.classList.remove('hidden');
+                return;
+            }
+            emptyMsg.classList.add('hidden');
+
+            const headers = Object.keys(arr[0]);
+            let headerHTML = '<tr>';
+            headers.forEach(h => headerHTML += `<th class="whitespace-nowrap">${h}</th>`);
+            headerHTML += '</tr>';
+            thead.innerHTML = headerHTML;
+
+            arr.forEach(row => {
+                let tr = '<tr class="transition-colors">';
+                headers.forEach(h => {
+                    let val = row[h];
+                    if(typeof val === 'object' && val !== null) val = JSON.stringify(val);
+                    if(val === null || val === undefined) val = '-';
+                    tr += `<td class="whitespace-nowrap">${val}</td>`;
+                });
+                tr += '</tr>';
+                tbody.innerHTML += tr;
+            });
         }
 
         async function runExecution() {
-            const paramsObj = getParamValues();
-            // Filter empty values to prevent 422 on optional ints
-            const cleanParams = {};
-            for (const [key, val] of Object.entries(paramsObj)) {
-                if (val !== "") cleanParams[key] = val;
-            }
-            const params = new URLSearchParams(cleanParams);
-            
-            const url = `${API_URL}/execute/${currentOp}/${currentDB}?${params}`;
-            document.getElementById('console-output').innerHTML = '<div class="text-yellow-500 animate-pulse">⏳ Procesando...</div>';
-            
+            const params = new URLSearchParams();
+            (INPUTS[currentOp] || []).forEach(inp => params.append(inp.id, document.getElementById(`input-${inp.id}`).value));
+
+            const consoleDiv = document.getElementById('console-output');
+            const queryCodeDiv = document.getElementById('query-code');
+
+            consoleDiv.innerHTML = '<span class="text-yellow-500 animate-pulse">⏳ Ejecutando petición...</span>';
+            queryCodeDiv.innerText = '...';
+
             try {
-                const res = await fetch(url);
-                if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(`Error ${res.status}: ${JSON.stringify(err.detail || err)}`);
-                }
-                const data = await res.json();
-                const consoleDiv = document.getElementById('console-output');
+                const res = await fetch(`${API_URL}/execute/${currentOp}/${currentDB}?${params}`);
+                const json = await res.json();
+
                 consoleDiv.innerHTML = '';
-                data.trace.forEach(l => { const d=document.createElement('div'); d.innerText=l; consoleDiv.appendChild(d); });
-                document.getElementById('json-output').innerText = JSON.stringify(data.data, null, 2);
-                document.getElementById('exec-time').innerText = `${data.time_ms} ms`;
-            } catch(e) { 
-                document.getElementById('console-output').innerHTML = `<div class="text-red-500 font-bold">❌ ${e.message}</div>`;
+                json.trace.forEach(l => consoleDiv.innerHTML += `<div class="py-0.5">${l}</div>`);
+                document.getElementById('exec-time').innerText = `${json.time_ms} ms`;
+
+                queryCodeDiv.textContent = json.query_str || "Operación interna (sin query estándar)";
+                hljs.highlightElement(queryCodeDiv);
+
+                document.getElementById('json-output').textContent = JSON.stringify(json.data, null, 2);
+                hljs.highlightElement(document.getElementById('json-output'));
+                renderTable(json.data);
+            } catch (e) {
+                consoleDiv.innerHTML = `<span class="text-red-500 font-bold">❌ Error: ${e.message}</span>`;
             }
         }
 
         async function runBenchmark(op) {
-            ['redis','mongo','riak'].forEach(db => { document.getElementById(`bench-bar-${db}`).style.width='0%'; document.getElementById(`bench-time-${db}`).innerText='...'; });
-            const params = new URLSearchParams({ min_val:20000, max_val:50000, sector:2, sexo:'M', dni:'555888999', nombre:'BenchUser', ingresos:30000 });
-            const results = [];
-            for (const db of ['redis','mongo','riak']) {
-                const res = await fetch(`${API_URL}/execute/${op}/${db}?${params}`);
-                const data = await res.json();
-                results.push({db, time: data.time_ms});
-                document.getElementById(`bench-time-${db}`).innerText = `${data.time_ms} ms`;
+            ['redis','mongo','riak'].forEach(db => {
+                document.getElementById(`bench-bar-${db}`).style.width = '0%';
+                document.getElementById(`bench-res-${db}`).innerText = 'Running...';
+                document.getElementById(`bench-res-${db}`).classList.add('animate-pulse');
+            });
+            document.getElementById('bench-winner').innerText = '';
+
+            let paramsObj = {};
+            if (op === 'leer') {
+                paramsObj = { dni: '123456789' };
+            } else if (op === 'insertar') {
+                paramsObj = { dni: '555888999', nombre: 'BenchmarkUser', ingresos: 35000, sector: 2, sexo: 'M' };
+            } else if (op === 'rango') {
+                paramsObj = { min_val: 20000, max_val: 50000 };
+            } else if (op === 'agregacion') {
+                paramsObj = { sector: 2 };
             }
-            const max = Math.max(...results.map(r=>r.time));
-            results.forEach(r => document.getElementById(`bench-bar-${r.db}`).style.width = `${(r.time/max)*100}%`);
+
+            const params = new URLSearchParams(paramsObj);
+            const times = {};
+
+            for (const db of ['redis', 'mongo', 'riak']) {
+                try {
+                    await new Promise(r => setTimeout(r, 100));
+                    const res = await fetch(`${API_URL}/execute/${op}/${db}?${params}`);
+                    const data = await res.json();
+                    times[db] = data.time_ms;
+                } catch(e) {
+                    console.error(`Error en ${db}:`, e);
+                    times[db] = 9999;
+                }
+
+                document.getElementById(`bench-res-${db}`).innerText = times[db] + ' ms';
+                document.getElementById(`bench-res-${db}`).classList.remove('animate-pulse');
+            }
+
+            const timesArr = Object.values(times);
+            const maxTime = Math.max(...timesArr);
+            const minTime = Math.min(...timesArr);
+
+            for (const db of ['redis', 'mongo', 'riak']) {
+                let percentage = (times[db] / maxTime) * 100;
+                if (percentage < 1) percentage = 1;
+                document.getElementById(`bench-bar-${db}`).style.width = `${percentage}%`;
+            }
+
+            const winner = Object.keys(times).reduce((a, b) => times[a] < times[b] ? a : b);
+            const diff = minTime > 0 ? (maxTime / minTime).toFixed(1) : "∞";
+
+            document.getElementById('bench-winner').innerHTML =
+                `Ganador: <span class="uppercase text-white font-bold">${winner}</span>`;
         }
     </script>
 </body>

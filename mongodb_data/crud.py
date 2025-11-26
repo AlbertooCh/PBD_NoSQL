@@ -68,8 +68,7 @@ def ejecutar_pruebas_crud(db):
     print("Ejecutando subida de sueldo a 50.000 €...")
     try:
         db.poblacion.update_one({"_id": id_prueba_nuevo}, {"$set": {"ingresos": 50000}})
-        
-        # Verificación inmediata
+
         despues = db.poblacion.find_one({"_id": id_prueba_nuevo})
         if despues and despues.get('ingresos') == 50000:
             print(f"UPDATE CORRECTO: Sueldo actual es {despues.get('ingresos')} €")
@@ -80,7 +79,7 @@ def ejecutar_pruebas_crud(db):
 
 
     # ---------------------------------------------------------
-    # PASO 5: DELETE (Borrar un registro específico)
+    # PASO 5: DELETE
     # ---------------------------------------------------------
     print(f"\nPASO 5: DELETE (Borrar Usuario Objetivo - {id_objetivo_borrado})")
     print("-" * 40)
@@ -95,7 +94,7 @@ def ejecutar_pruebas_crud(db):
 
 
     # ---------------------------------------------------------
-    # PASO 6: DELETE (Limpieza Usuario Test)
+    # PASO 6: DELETE
     # ---------------------------------------------------------
     print("\nPASO 6: DELETE (Limpieza Usuario Test)")
     print("-" * 40)
@@ -111,10 +110,6 @@ def ejecutar_pruebas_crud(db):
         print(f"ERROR en limpieza final: {e}")
 
 
-    # ---------------------------------------------------------
-    # AVISO FINAL DE LOGS
-    # ---------------------------------------------------------
-    
     print("\n" + "="*70)
     print("TRIGGER: La operación ha sido enviada a MongoDB Atlas.") 
     print("            (Revisar 'App Services > Logs' en la nube para verificar).")

@@ -45,11 +45,8 @@ def store_object_with_indexes(bucket, key, data, indexes=None):
     """
     url = f"{RIAK_HOST}/buckets/{bucket}/keys/{key}"
 
-    # Copiamos las cabeceras base
     headers = HEADERS_JSON.copy()
 
-    # IMPORTANTE: Mapeo de índices a Cabeceras HTTP
-    # Ejemplo: 'ingresos_int' -> 'x-riak-index-ingresos_int'
     if indexes:
         for idx_name, idx_value in indexes.items():
             header_name = f"x-riak-index-{idx_name}"
@@ -60,7 +57,6 @@ def store_object_with_indexes(bucket, key, data, indexes=None):
 
 
 def query_2i_exact(bucket, index_name, value):
-    """ Consulta exacta: /buckets/B/index/IDX/VAL """
     url = f"{RIAK_HOST}/buckets/{bucket}/index/{index_name}/{value}"
     resp = requests.get(url)
     if resp.status_code == 200:
@@ -76,10 +72,6 @@ def query_2i_range(bucket, index_name, min_val, max_val):
         return resp.json().get('keys', [])
     return []
 
-
-# ------------------------------
-# LÓGICA DE NEGOCIO
-# ------------------------------
 
 def indexar_datos_existentes():
     print("Indexando datos existentes en Riak (Actualizando headers HTTP)...")
@@ -103,10 +95,8 @@ def indexar_datos_existentes():
 def buscar_por_ingresos(min_ing=0, max_ing=100000):
     print(f"\nPersonas con ingresos entre {min_ing} y {max_ing}:")
 
-    # 1. Obtenemos las claves que cumplen el criterio 2i
     keys_found = query_2i_range('poblacion', 'ingresos_int', min_ing, max_ing)
 
-    # 2. Obtenemos los objetos completos
     for k in keys_found:
         d = get_object('poblacion', k)
         if d:
@@ -116,10 +106,8 @@ def buscar_por_ingresos(min_ing=0, max_ing=100000):
 def filtrar_por_sector_sexo(sector, sexo):
     print(f"\nPersonas del sector {sector} y sexo {sexo}:")
 
-    # 1. Filtro primario eficiente: Índice de Riak
     keys_sector = query_2i_exact('poblacion', 'sector_int', sector)
 
-    # 2. Filtro secundario: Application Side
     for k in keys_sector:
         d = get_object('poblacion', k)
         if d and d['sexo'] == sexo:
@@ -137,7 +125,6 @@ def guardar_resumen_sector():
             resumen.setdefault(s, 0)
             resumen[s] += p['ingresos']
 
-    # Guardamos en bucket 'resumenes' sin índices extra
     store_object_with_indexes('resumenes', 'resumen_sector', resumen)
 
     print("\nResumen por sector guardado en bucket 'resumenes', key 'resumen_sector':")
@@ -147,7 +134,6 @@ def guardar_resumen_sector():
 def insertar_persona_pubsub(p):
     key = p['dni']
 
-    # Preparamos los índices para insertarlos ATOMICAMENTE con el objeto
     indices = {
         'ingresos_int': p['ingresos'],
         'sector_int': p['sector'],
