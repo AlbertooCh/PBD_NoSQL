@@ -6,10 +6,6 @@ HEADERS = {'Content-Type': 'application/json'}
 
 
 def guardar_en_riak(bucket, key, data):
-    """
-    Función auxiliar para hacer el PUT a la API HTTP de Riak.
-    Estructura: /buckets/<bucket>/keys/<key>
-    """
     url = f"{RIAK_HOST}/buckets/{bucket}/keys/{key}"
     try:
         response = requests.put(url, data=json.dumps(data), headers=HEADERS)

@@ -24,7 +24,7 @@ try:
     try:
         from datasets.dataset import sectores, poblacion
     except ImportError:
-        from dataset import sectores, poblacion
+        from datasets import sectores, poblacion
 except ImportError:
     sectores = []
     poblacion = []
